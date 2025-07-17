@@ -118,7 +118,7 @@ def save_order(user_id, order):
         order["name"],
         order["address"],
         order["phone"],
-        order["payment"]
+        order["payment"],
         order.get('price', 0) #default 0 if none
     ))
     conn.commit()
@@ -185,7 +185,7 @@ def sellers_overview():
     conn.close()
     return render_template("sellers.html", sellers=sellers)
 
-    
+
 # Start the app
 
 if __name__ == '__main__':
