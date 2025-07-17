@@ -75,11 +75,17 @@ def handle_user_message(user_id, msg):
 
         seller_tag = match.group(1)
         product = re.sub(r'#\w+', '', msg).strip()
+        product_text = re.sub(r'#\w+', '', msg).strip()
+        price_match = re.search(r'@?(\d+(\.\d{1,2})?)', product_text)
+        price = float(price_match.group(1)) if price_match else None
+
+        product = re.sub(r'@?\d+(\.\d{1,2})?', '', product_text).strip()
         state = {
         "step": "awaiting_name",
         "order": {
             "seller": seller_tag,
-            "product": product
+            "product": product,
+            "price": price
         }
         }
         user_states[user_id] = state
@@ -105,6 +111,7 @@ def handle_user_message(user_id, msg):
         return (
             f"✅ Order confirmed!\n\n"
             f"📦 Product: {order['product']}\n"
+            f"💰 Price: @{order['price']:.2f}\n"
             f"👤 Name: {order['name']}\n"
             f"📍 Address: {order['address']}\n"
             f"📞 Phone: {order['phone']}\n"
@@ -129,7 +136,7 @@ def save_order(user_id, order):
         order["address"],
         order["phone"],
         order["payment"],
-        order.get('price', 0) #default 0 if none
+        order["price"] #default 0 if none
     ))
     conn.commit()
     cur.close()
