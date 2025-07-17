@@ -69,20 +69,33 @@ def handle_user_message(user_id, msg):
         "⚠️ Sorry, hindi ko po naintindihan wala po tag #.\n"
         "Please lagyan po natin ng hashtag si seller # example:\n"
         "`#Sophialive 2x Lip Balm`\n\n"
-        "Subukan po uli"
+        "Subukan po"
     )
-    elif 'step' not in state:
-        seller_tag = match.group(1) if match else "Unknown"
-        product = re.sub(r'#\w+', '', msg).strip()
-        state = {
-            "step": "awaiting_name",
-            "order": {
-                "seller": seller_tag,
-                "product": product
-            }
+
+    seller_tag = match.group(1)
+    if 'step' not in state:
+        match = re.search(r'#([A-Za-z0-9_]+)', msg)
+        if not match:
+            user_states.pop(user_id, None)  # clear any existing state
+            return (
+            "⚠️ Sorry, I couldn't detect a seller tag.\n"
+            "Please start your order with the seller hashtag like this:\n"
+            "`#MariaLive 2x Lipstick`\n\n"
+            "Try again 😊"
+        )
+
+    seller_tag = match.group(1)
+    product = re.sub(r'#\w+', '', msg).strip()
+    state = {
+        "step": "awaiting_name",
+        "order": {
+            "seller": seller_tag,
+            "product": product
         }
-        user_states[user_id] = state
-        return f"Thanks for your order for '{product}' from seller #{seller_tag}.\n\nMay I have your full name?"
+    }
+    user_states[user_id] = state
+    return f"Thanks for your order for '{product}' from seller #{seller_tag}.\nMay I have your full name?"
+
     elif state["step"] == "awaiting_name":
         state["order"]["name"] = msg
         state["step"] = "awaiting_address"
