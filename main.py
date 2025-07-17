@@ -42,7 +42,7 @@ def webhook():
         for msg_event in entry.get("messaging", []):
             sender_id = msg_event["sender"]["id"]
             if "message" in msg_event and "text" in msg_event["message"]:
-                user_message = msg_event["message"]["text"]
+                user_message = msg_event["message"]["text"].title()
                 response = handle_user_message(sender_id, user_message)
                 send_message(sender_id, response)
     return "ok", 200
