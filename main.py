@@ -61,30 +61,18 @@ def webhook():
     return "ok", 200
 
 def handle_user_message(user_id, msg):
-
-    #monthly subscription
-    
-    # valid_sellers = {"MariaLive", "JudeShop", "TitaGlow"}
-
-    # if seller_tag not in valid_sellers:
-    #     user_states.pop(user_id, None)
-    #     return (
-    #     f"❌ The seller `#{seller_tag}` is not recognized.\n"
-    #     "Please make sure you’re ordering from a valid seller."
-    # )
-    #     state = user_states.get(user_id, {})
-
-
+    state = user_states.get(user_id, {})
+    match = re.search(r'#([A-Za-z0-9_]+)', msg)
     if not match:
-    user_states.pop(user_id, None)  # clear any existing state
+        user_states.pop(user_id, None)  # clear any existing state
         return (
-        "⚠️ Sorry, Hindi ko po naintindihan.\n"
-        "Ulitin po natin e hashtag po natin kung sino seller # tulad po nito:\n"
-        "#Sophialivestore 2x Lip Balm\n\n"
+        "⚠️ Sorry, hindi ko po naintindihan wala po tag #.\n"
+        "Please lagyan po natin ng hashtag si seller # example:\n"
+        "`#Sophialive 2x Lip Balm`\n\n"
         "Subukan po uli"
     )
 
-        seller_tag = match.group(1)
+    seller_tag = match.group(1)
     if 'step' not in state:
         match = re.search(r'#([A-Za-z0-9_]+)', msg)
         seller_tag = match.group(1) if match else "Unknown"
@@ -132,7 +120,7 @@ def save_order(user_id, order):
     conn = get_pg_connection()
     cur = conn.cursor()
     cur.execute('''
-        INSERT INTO orders (user_id, seller, product, name, address, phone, payment, price)
+        INSERT INTO orders (user_id, seller, product, name, address, phone, payment,price)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     ''', (
         user_id,
