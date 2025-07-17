@@ -61,12 +61,25 @@ def webhook():
     return "ok", 200
 
 def handle_user_message(user_id, msg):
-    state = user_states.get(user_id, {})
+
+    #monthly subscription
+    
+    # valid_sellers = {"MariaLive", "JudeShop", "TitaGlow"}
+
+    # if seller_tag not in valid_sellers:
+    #     user_states.pop(user_id, None)
+    #     return (
+    #     f"❌ The seller `#{seller_tag}` is not recognized.\n"
+    #     "Please make sure you’re ordering from a valid seller."
+    # )
+    #     state = user_states.get(user_id, {})
+
+
     if not match:
     user_states.pop(user_id, None)  # clear any existing state
         return (
         "⚠️ Sorry, Hindi ko po naintindihan.\n"
-        "Ulitin po natin i hashtag po natin kung sino seller # Tulad po nito:\n"
+        "Ulitin po natin e hashtag po natin kung sino seller # tulad po nito:\n"
         "#Sophialivestore 2x Lip Balm\n\n"
         "Subukan po uli"
     )
