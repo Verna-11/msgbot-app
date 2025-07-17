@@ -84,17 +84,17 @@ def handle_user_message(user_id, msg):
             "Try again 😊"
         )
 
-    seller_tag = match.group(1)
-    product = re.sub(r'#\w+', '', msg).strip()
-    state = {
+        seller_tag = match.group(1)
+        product = re.sub(r'#\w+', '', msg).strip()
+        state = {
         "step": "awaiting_name",
         "order": {
             "seller": seller_tag,
             "product": product
         }
     }
-    user_states[user_id] = state
-    return f"Thanks for your order for '{product}' from seller #{seller_tag}.\nMay I have your full name?"
+        user_states[user_id] = state
+        return f"Thanks for your order for '{product}' from seller #{seller_tag}.\nMay I have your full name?"
 
     elif state["step"] == "awaiting_name":
         state["order"]["name"] = msg
