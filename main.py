@@ -5,7 +5,7 @@ import os
 app = Flask(__name__)
 
 VERIFY_TOKEN = "test123"
-PAGE_ACCESS_TOKEN = "your_page_access_token"
+PAGE_ACCESS_TOKEN = "EAARsLYLElpcBPFoGAXkq1N6hjluaFhGEqV11cWHIxeAeomv7XDgke3LKM7TOY3n7I81eKVZCZBvw3aknrzKLZCqfDE4hmI7EzZCfwQjFtBZCPqT3MLW0rZCL8ZBqvN3nyCgEpQOvJF9u2hbhm8j180aZAokRtbRWCeNM0fkEek62bE4M1wrSBZBd7xMVhmaOy0Er6mxWzDwZDZD"
 user_states = {}
 
 # 🔧 SQLite init
