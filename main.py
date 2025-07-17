@@ -71,10 +71,7 @@ def handle_user_message(user_id, msg):
         "`#Sophialive 2x Lip Balm`\n\n"
         "Subukan po uli"
     )
-
-    seller_tag = match.group(1)
-    if 'step' not in state:
-        match = re.search(r'#([A-Za-z0-9_]+)', msg)
+    elif 'step' not in state:
         seller_tag = match.group(1) if match else "Unknown"
         product = re.sub(r'#\w+', '', msg).strip()
         state = {
