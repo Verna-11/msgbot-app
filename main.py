@@ -62,6 +62,16 @@ def webhook():
 
 def handle_user_message(user_id, msg):
     state = user_states.get(user_id, {})
+    if not match:
+    user_states.pop(user_id, None)  # clear any existing state
+        return (
+        "⚠️ Sorry, Hindi ko po naintindihan.\n"
+        "Ulitin po natin i hashtag po natin kung sino seller # Tulad po nito:\n"
+        "#Sophialivestore 2x Lip Balm\n\n"
+        "Subukan po uli"
+    )
+
+        seller_tag = match.group(1)
     if 'step' not in state:
         match = re.search(r'#([A-Za-z0-9_]+)', msg)
         seller_tag = match.group(1) if match else "Unknown"
