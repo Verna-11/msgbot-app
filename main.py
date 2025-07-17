@@ -1,17 +1,13 @@
-from flask import Flask, request
-import requests
-import sqlite3
-import re
+from flask import Flask, request, render_template
+import sqlite3, requests, re
 
 app = Flask(__name__)
 
 VERIFY_TOKEN = "test123"
-PAGE_ACCESS_TOKEN = "EAARsLYLElpcBPG0EiUlS1oCX7sl8RFInZClq7R8uY9XGT2ZBPVJ3bllj9WHXyb7bebxdAm6PPTfbLpmmv4fzjP9ouF58IxOU5xt0zZAOZBkNJvJrY7pwt2F65FYO45OMQoVKgMQLUFhBGq8jDxLFf4YIZAKGjs51KJdIF4aMhlQbnc0eg19UR2nYjtasm8OfxURXx8QZDZD"
-
-# In-memory user states
+PAGE_ACCESS_TOKEN = "your_page_access_token"
 user_states = {}
 
-# Initialize database
+# 🔧 SQLite init
 def init_db():
     conn = sqlite3.connect("orders.db")
     cur = conn.cursor()
@@ -32,6 +28,7 @@ def init_db():
 
 init_db()
 
+# ✅ Messenger Webhook
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
     if request.method == 'GET':
@@ -51,14 +48,10 @@ def webhook():
 
 def handle_user_message(user_id, msg):
     state = user_states.get(user_id, {})
-
     if 'step' not in state:
-    # Extract seller tag if present
         match = re.search(r'#([A-Za-z0-9_]+)', msg)
         seller_tag = match.group(1) if match else "Unknown"
-    
         product = re.sub(r'#\w+', '', msg).strip()
-    
         state = {
             "step": "awaiting_name",
             "order": {
@@ -68,33 +61,23 @@ def handle_user_message(user_id, msg):
         }
         user_states[user_id] = state
         return f"Thanks for your order for '{product}' from seller #{seller_tag}.\nMay I have your full name?"
-
-    elif state["step"] == "awaiting_product":
-        state["order"]["product"] = msg
-        state["step"] = "awaiting_name"
-        return "Got it. May I have your full name?"
-
     elif state["step"] == "awaiting_name":
         state["order"]["name"] = msg
         state["step"] = "awaiting_address"
         return "Thanks! What is your complete delivery address?"
-
     elif state["step"] == "awaiting_address":
         state["order"]["address"] = msg
         state["step"] = "awaiting_phone"
         return "Noted. What's your phone number?"
-
     elif state["step"] == "awaiting_phone":
         state["order"]["phone"] = msg
         state["step"] = "awaiting_payment"
         return "Almost done. Will you pay via GCash or Cash on Delivery?"
-
     elif state["step"] == "awaiting_payment":
         state["order"]["payment"] = msg
         order = state["order"]
         save_order(user_id, order)
         user_states.pop(user_id)
-
         return (
             f"✅ Order confirmed!\n\n"
             f"📦 Product: {order['product']}\n"
@@ -104,21 +87,16 @@ def handle_user_message(user_id, msg):
             f"💰 Payment: {order['payment']}\n\n"
             f"Thank you! We’ll be in touch soon. 😊"
         )
-    if msg.lower().strip() in ["cancel", "start", "restart"]:
-        user_states.pop(user_id, None)
-        return "✅ Restarted. What product would you like to order? Please include the seller code (e.g., #Ana123)."
-
     else:
-        # Unknown state
         user_states.pop(user_id, None)
-        return "Oops, something went wrong. Let’s start over. What product would you like to order?"
+        return "Oops, something went wrong. Let's start over. Please send your order again."
 
 def save_order(user_id, order):
     conn = sqlite3.connect("orders.db")
     cur = conn.cursor()
     cur.execute('''
         INSERT INTO orders (user_id, seller, product, name, address, phone, payment)
-        VALUES (?, ?, ?, ?, ?, ?,?)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
     ''', (
         user_id,
         order["seller"],
@@ -132,9 +110,6 @@ def save_order(user_id, order):
     conn.close()
 
 def send_message(recipient_id, message_text):
-    res = requests.post(url, headers=headers, params=params, json=payload)
-    if res.status_code != 200:
-        print("Failed to send message:", res.status_code, res.text)
     url = "https://graph.facebook.com/v18.0/me/messages"
     headers = {"Content-Type": "application/json"}
     payload = {
@@ -142,7 +117,24 @@ def send_message(recipient_id, message_text):
         "message": {"text": message_text}
     }
     params = {"access_token": PAGE_ACCESS_TOKEN}
-    requests.post(url, headers=headers, params=params, json=payload)
+    res = requests.post(url, headers=headers, params=params, json=payload)
+    if res.status_code != 200:
+        print("Failed to send message:", res.text)
 
+# 📊 Dashboard View
+@app.route('/')
+def dashboard():
+    seller = request.args.get("seller")
+    conn = sqlite3.connect("orders.db")
+    cur = conn.cursor()
+    if seller:
+        cur.execute("SELECT * FROM orders WHERE seller = ? ORDER BY id DESC", (seller,))
+    else:
+        cur.execute("SELECT * FROM orders ORDER BY id DESC")
+    orders = cur.fetchall()
+    conn.close()
+    return render_template("dashboard.html", orders=orders, seller=seller)
+
+# Start the app
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
+    app.run(debug=True)
