@@ -32,7 +32,8 @@ def init_pg():
             name TEXT,
             address TEXT,
             phone TEXT,
-            payment TEXT
+            payment TEXT,
+            price NUMERIC
         )
     ''')
     conn.commit()
@@ -73,7 +74,7 @@ def handle_user_message(user_id, msg):
             }
         }
         user_states[user_id] = state
-        return f"Thanks for your order for '{product}' from seller #{seller_tag}.\nMay I have your full name?"
+        return f"Thanks for your order for '{product}' from seller #{seller_tag}.\n\nMay I have your full name?"
     elif state["step"] == "awaiting_name":
         state["order"]["name"] = msg
         state["step"] = "awaiting_address"
@@ -81,11 +82,11 @@ def handle_user_message(user_id, msg):
     elif state["step"] == "awaiting_address":
         state["order"]["address"] = msg
         state["step"] = "awaiting_phone"
-        return "Noted. What's your phone number?"
+        return "Noted. What's your phone number? or \n the Seller knows how to contact you reply with N/A"
     elif state["step"] == "awaiting_phone":
         state["order"]["phone"] = msg
         state["step"] = "awaiting_payment"
-        return "Almost done. Will you pay via GCash or Cash on Delivery?"
+        return "Almost done. Bank Transfer Maya \n Gcash or Cash on Delivery?"
     elif state["step"] == "awaiting_payment":
         state["order"]["payment"] = msg
         order = state["order"]
@@ -109,7 +110,7 @@ def save_order(user_id, order):
     cur = conn.cursor()
     cur.execute('''
         INSERT INTO orders (user_id, seller, product, name, address, phone, payment)
-        VALUES (%s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     ''', (
         user_id,
         order["seller"],
@@ -118,6 +119,7 @@ def save_order(user_id, order):
         order["address"],
         order["phone"],
         order["payment"]
+        order.get('price', 0) #default 0 if none
     ))
     conn.commit()
     cur.close()
@@ -151,6 +153,39 @@ def dashboard():
     conn.close()
     return render_template("dashboard.html", orders=orders, seller=seller)
 
+#  Buyers View
+@app.route('/buyers')
+def buyers_summary():
+    conn = get_pg_connection()
+    cur = conn.cursor()
+    cur.execute('''
+        SELECT name, SUM(price) AS total_spent
+        FROM orders
+        GROUP BY name
+        ORDER BY total_spent DESC
+    ''')
+    summary = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template("buyers.html", summary=summary)
+
+# Sellers View
+@app.route('/sellers')
+def sellers_overview():
+    conn = get_pg_connection()
+    cur = conn.cursor()
+    cur.execute('''
+        SELECT seller, COUNT(DISTINCT name) AS buyer_count, SUM(price) AS total_sales
+        FROM orders
+        GROUP BY seller
+        ORDER BY total_sales DESC
+    ''')
+    sellers = cur.fetchall()
+    cur.close()
+    conn.close()
+    return render_template("sellers.html", sellers=sellers)
+
+    
 # Start the app
 
 if __name__ == '__main__':

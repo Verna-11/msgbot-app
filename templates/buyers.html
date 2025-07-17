@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Buyer Summary</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 2rem;
+            background: #f4f4f4;
+        }
+        h1 {
+            text-align: center;
+        }
+        table {
+            width: 80%;
+            margin: 2rem auto;
+            border-collapse: collapse;
+            background: white;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 1rem;
+            border: 1px solid #ccc;
+            text-align: left;
+        }
+        th {
+            background: #007bff;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        .back-link {
+            text-align: center;
+            margin-top: 1rem;
+        }
+        .back-link a {
+            color: #007bff;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧾 Total Orders per Buyer</h1>
+    <table>
+        <tr>
+            <th>👤 Buyer Name</th>
+            <th>💰 Total Spent</th>
+        </tr>
+        {% for row in summary %}
+        <tr>
+            <td>{{ row[0] }}</td>
+            <td>₱{{ "%.2f"|format(row[1]) }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+    <div class="back-link">
+        <a href="/">← Back to Dashboard</a>
+    </div>
+</body>
+</html>
