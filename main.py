@@ -109,7 +109,7 @@ def save_order(user_id, order):
     conn = get_pg_connection()
     cur = conn.cursor()
     cur.execute('''
-        INSERT INTO orders (user_id, seller, product, name, address, phone, payment)
+        INSERT INTO orders (user_id, seller, product, name, address, phone, payment, price)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     ''', (
         user_id,
