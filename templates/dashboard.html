@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Seller Dashboard</title>
+  <title>Live Seller Dashboard</title>
   <style>
     body { font-family: sans-serif; padding: 20px; }
     h1 { margin-bottom: 10px; }
@@ -11,18 +11,18 @@
   </style>
 </head>
 <body>
-  <h1>Seller Dashboard</h1>
+  <h1>Live Dashboard</h1>
   <form method="get">
     <label>Filter by seller tag:</label>
-    <input name="seller" placeholder="e.g. Ana123" value="{{ seller or '' }}">
+    <input name="seller" placeholder="e.g. Jane123" value="{{ seller or '' }}">
     <button type="submit">Search</button>
     <a href="/">Reset</a>
   </form>
   <table>
     <tr>
-      <th>ID</th>
+      <th>ID:</th>
       <th>Seller</th>
-      <th>Product</th>
+      <th>Product Code</th>
       <th>Name</th>
       <th>Address</th>
       <th>Phone</th>

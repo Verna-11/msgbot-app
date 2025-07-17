@@ -1,20 +1,31 @@
 from flask import Flask, request, render_template
-import sqlite3, requests, re
+import requests, re
 import os
+import psycopg2
+from urllib.parse import urlparse
+
 
 app = Flask(__name__)
+
 
 VERIFY_TOKEN = "test123"
 PAGE_ACCESS_TOKEN = "EAARsLYLElpcBPFoGAXkq1N6hjluaFhGEqV11cWHIxeAeomv7XDgke3LKM7TOY3n7I81eKVZCZBvw3aknrzKLZCqfDE4hmI7EzZCfwQjFtBZCPqT3MLW0rZCL8ZBqvN3nyCgEpQOvJF9u2hbhm8j180aZAokRtbRWCeNM0fkEek62bE4M1wrSBZBd7xMVhmaOy0Er6mxWzDwZDZD"
 user_states = {}
 
-# 🔧 SQLite init
-def init_db():
-    conn = sqlite3.connect("orders.db")
+
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+#connecting to postgres
+def get_pg_connection():
+    return psycopg2.connect(DATABASE_URL, sslmode="require")
+
+#data base connection and commit
+def init_pg():
+    conn = get_pg_connection()
     cur = conn.cursor()
     cur.execute('''
         CREATE TABLE IF NOT EXISTS orders (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            id SERIAL PRIMARY KEY,
             user_id TEXT,
             seller TEXT,
             product TEXT,
@@ -25,9 +36,10 @@ def init_db():
         )
     ''')
     conn.commit()
+    cur.close()
     conn.close()
 
-init_db()
+init_pg() #initiating db
 
 # ✅ Messenger Webhook
 @app.route('/webhook', methods=['GET', 'POST'])
@@ -93,11 +105,11 @@ def handle_user_message(user_id, msg):
         return "Oops, something went wrong. Let's start over. Please send your order again."
 
 def save_order(user_id, order):
-    conn = sqlite3.connect("orders.db")
+    conn = get_pg_connection()
     cur = conn.cursor()
     cur.execute('''
         INSERT INTO orders (user_id, seller, product, name, address, phone, payment)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
     ''', (
         user_id,
         order["seller"],
@@ -108,7 +120,9 @@ def save_order(user_id, order):
         order["payment"]
     ))
     conn.commit()
+    cur.close()
     conn.close()
+
 
 def send_message(recipient_id, message_text):
     url = "https://graph.facebook.com/v18.0/me/messages"
@@ -126,13 +140,14 @@ def send_message(recipient_id, message_text):
 @app.route('/')
 def dashboard():
     seller = request.args.get("seller")
-    conn = sqlite3.connect("orders.db")
+    conn = get_pg_connection()
     cur = conn.cursor()
     if seller:
-        cur.execute("SELECT * FROM orders WHERE seller = ? ORDER BY id DESC", (seller,))
+        cur.execute("SELECT * FROM orders WHERE seller = %s ORDER BY id DESC", (seller,))
     else:
         cur.execute("SELECT * FROM orders ORDER BY id DESC")
     orders = cur.fetchall()
+    cur.close()
     conn.close()
     return render_template("dashboard.html", orders=orders, seller=seller)
 
