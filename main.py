@@ -70,7 +70,7 @@ def handle_user_message(user_id, msg):
             "⚠️ Sorry, hindi ko po naintindihan wala po tag #.\n"
             "Please lagyan po natin ng hashtag si seller # example:\n"
             "`#Sophialive 2x Lip Balm`\n\n"
-            "Subukan po"
+            "Subukan po uli"
         )
 
         seller_tag = match.group(1)
@@ -93,7 +93,7 @@ def handle_user_message(user_id, msg):
     
     elif state["step"] == "awaiting_name":
         state["order"]["name"] = msg
-        state["step"] = "awaiting_price"
+        state["step"] = "awaiting_address"
         return "Thanks! What is your complete delivery address?"
     elif state["step"] == "awaiting_address":
         state["order"]["address"] = msg
