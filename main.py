@@ -81,13 +81,6 @@ def handle_user_message(user_id, msg):
         seller_tag = match.group(1)
         product_text = re.sub(r'#\w+', '', msg).strip()
 
-        patterns = [
-        (r'(\d+)[xX]₱?(\d+(\.\d{1,2})?)', lambda m: (int(m.group(1)), float(m.group(2)))),
-        (r'[xX](\d+)\s*₱?(\d+(\.\d{1,2})?)', lambda m: (int(m.group(1)), float(m.group(2)))),
-        (r'₱?(\d+(\.\d{1,2})?)\s*[xX](\d+)', lambda m: (int(m.group(3)), float(m.group(1)))),
-        (r'₱?(\d+(\.\d{1,2})?)\s*(\d+)[xX]', lambda m: (int(m.group(3)), float(m.group(1)))),
-        (r'₱?(\d+(\.\d{1,2})?)', lambda m: (1, float(m.group(1)))),
-        ]
         # Match formats like: 2x100, 2X₱100.00
         match_qty_price1 = re.search(r'(\d+)[xX]₱?(\d+(\.\d{1,2})?)', product_text)
         
@@ -101,57 +94,50 @@ def handle_user_message(user_id, msg):
         match_price_qty_reverse = re.search(r'₱?(\d+(\.\d{1,2})?)\s*(\d+)[xX]', product_text)
         # Match single price: 100 or ₱100
         match_single_price = re.search(r'₱?(\d+(\.\d{1,2})?)', product_text)
-            
-        for pattern, extractor in patterns:
-            match = re.search(pattern, product_text)
-            if match:
-                quantity, unit_price = extractor(match)
-                total_price = quantity * unit_price
-                product = product_text.replace(match.group(0), '').strip()
-
-            elif match_qty_price1:
-                quantity = int(match_qty_price1.group(1))
-                unit_price = float(match_qty_price1.group(2))
-                total_price = quantity * unit_price
-                product = re.sub(r'\d+[xX]₱?\d+(\.\d{1,2})?', '', product_text).strip()
-            elif match_qty_price2:
-                quantity = int(match_qty_price2.group(1))
-                unit_price = float(match_qty_price2.group(2))
-                total_price = quantity * unit_price
-                product = re.sub(r'[xX]\d+\s*₱?\d+(\.\d{1,2})?', '', product_text).strip()
-            elif match_price_qty:
-                unit_price = float(match_price_qty.group(1))
-                quantity = int(match_price_qty.group(3))
-                total_price = quantity * unit_price
-                product = re.sub(r'₱?\d+(\.\d{1,2})?\s*[xX]\d+', '', product_text).strip()
-            elif match_price_qty_reverse:
-                unit_price = float(match_price_qty_reverse.group(1))
-                quantity = int(match_price_qty_reverse.group(3))
-                total_price = quantity * unit_price
-                product = product_text.replace(match_price_qty_reverse.group(0), '').strip()
-            elif match_single_price:
-                quantity = 1
-                unit_price = float(match_single_price.group(1))
-                total_price = unit_price
-                product = re.sub(r'₱?\d+(\.\d{1,2})?', '', product_text).strip()
-            else:
-                quantity = 1
-                unit_price = None
-                total_price = None
-                product = product_text.strip()
-            
-            state = {
-            "step": "awaiting_name",
-            "order": {
-                "seller": seller_tag,
-                "product": product,
-                "unit_price": unit_price,
-                "quantity": quantity,
-                "price": total_price
-            }
-            }
-            user_states[user_id] = state
-            return f"Thanks for your order for '{product}' from seller #{seller_tag}.\nMay I have your full name?"
+        
+        if match_qty_price1:
+            quantity = int(match_qty_price1.group(1))
+            unit_price = float(match_qty_price1.group(2))
+            total_price = quantity * unit_price
+            product = re.sub(r'\d+[xX]₱?\d+(\.\d{1,2})?', '', product_text).strip()
+        elif match_qty_price2:
+            quantity = int(match_qty_price2.group(1))
+            unit_price = float(match_qty_price2.group(2))
+            total_price = quantity * unit_price
+            product = re.sub(r'[xX]\d+\s*₱?\d+(\.\d{1,2})?', '', product_text).strip()
+        elif match_price_qty:
+            unit_price = float(match_price_qty.group(1))
+            quantity = int(match_price_qty.group(3))
+            total_price = quantity * unit_price
+            product = re.sub(r'₱?\d+(\.\d{1,2})?\s*[xX]\d+', '', product_text).strip()
+        elif match_price_qty_reverse:
+            unit_price = float(match_price_qty_reverse.group(1))
+            quantity = int(match_price_qty_reverse.group(3))
+            total_price = quantity * unit_price
+            product = product_text.replace(match_price_qty_reverse.group(0), '').strip()
+        elif match_single_price:
+            quantity = 1
+            unit_price = float(match_single_price.group(1))
+            total_price = unit_price
+            product = re.sub(r'₱?\d+(\.\d{1,2})?', '', product_text).strip()
+        else:
+            quantity = 1
+            unit_price = None
+            total_price = None
+            product = product_text.strip()
+        
+        state = {
+        "step": "awaiting_name",
+        "order": {
+            "seller": seller_tag,
+            "product": product,
+            "unit_price": unit_price,
+            "quantity": quantity,
+            "price": total_price
+        }
+        }
+        user_states[user_id] = state
+        return f"Thanks for your order for '{product}' from seller #{seller_tag}.\nMay I have your full name?"
     
     elif state["step"] == "awaiting_name":
         state["order"]["name"] = msg
