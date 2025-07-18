@@ -75,7 +75,7 @@ def handle_user_message(user_id, msg):
 
         seller_tag = match.group(1)
         product = re.sub(r'#\w+', '', msg).strip()
-        price_match = re.search(r'@?(\d+(\.\d{1,2})?)', product)
+        price_match = re.search(r'@?(\d+(\.\d{2,4})?)', product)
         price = float(price_match.group(1)) if price_match else None
         quantity_match = re.search(r"x[0-9]",product)
         quantity = (quantity_match.group(1) if quantity_match else None)
@@ -112,6 +112,7 @@ def handle_user_message(user_id, msg):
             f"✅ Order confirmed!\n\n"
             f"📦 Product: {order['product']}\n"
             f"💰 Price: @{order['price']:.2f}\n"
+            f"    Quantity {order['quantity']}\n"
             f"👤 Name: {order['name']}\n"
             f"📍 Address: {order['address']}\n"
             f"📞 Phone: {order['phone']}\n"
