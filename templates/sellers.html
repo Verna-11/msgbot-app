@@ -1,71 +1,79 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
-    <title>Sellers Overview</title>
+    <title>Seller Dashboard</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 2rem;
-            background: #f4f4f4;
-        }
-        h1 {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
         table {
             width: 80%;
             margin: auto;
             border-collapse: collapse;
-            background: white;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
+
         th, td {
-            padding: 1rem;
-            border: 1px solid #ccc;
+            padding: 12px;
+            border: 1px solid #ddd;
             text-align: left;
         }
+
         th {
-            background: #007bff;
+            background-color: #f2f2f2;
+        }
+
+        .buyers-list {
+            margin-top: 5px;
+            font-size: 0.9em;
+            color: #555;
+        }
+
+        .buyer-link {
+            margin-right: 10px;
+        }
+
+        a.button {
+            padding: 6px 12px;
+            background-color: #4CAF50;
             color: white;
-        }
-        tr:nth-child(even) {
-            background: #f9f9f9;
-        }
-        a {
-            color: #007bff;
             text-decoration: none;
+            border-radius: 4px;
         }
-        a:hover {
-            text-decoration: underline;
+
+        a.button:hover {
+            background-color: #45a049;
         }
-        .back-link {
-            text-align: center;
-            margin-top: 2rem;
-        }
+
     </style>
 </head>
 <body>
-    <h1>🏪 Seller Sales Summary</h1>
-    <table>
-        <tr>
-            <th>Seller Tag</th>
-            <th>👥 Buyers</th>
-            <th>💰 Total Sales</th>
-            <th>📊 View Buyers</th>
-        </tr>
-        {% for seller, buyer_count, total_sales in sellers %}
-        <tr>
-            <td>#{{ seller }}</td>
-            <td>{{ buyer_count }}</td>
-            <td>₱{{ "%.2f"|format(total_sales or 0) }}</td>
-            <td><a href="/buyers?seller={{ seller }}">View</a></td>
-        </tr>
-        {% endfor %}
-    </table>
+    <h2 style="text-align:center;">Sellers and Buyers</h2>
 
-    <div class="back-link">
-        <a href="/">← Back to Dashboard</a>
-    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Seller</th>
+                <th>Total Orders</th>
+                <th>View Buyers</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for seller, count, buyers in sellers %}
+            <tr>
+                <td>{{ seller }}</td>
+                <td>{{ count }}</td>
+                <td>
+                    <a class="button" href="/buyers?seller={{ seller }}">See Buyers</a>
+                    {% if buyers %}
+                    <div class="buyers-list">
+                        {% for buyer in buyers %}
+                            <span class="buyer-link">{{ buyer }}</span>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <em>No buyers yet</em>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </body>
 </html>

@@ -159,8 +159,8 @@ def handle_user_message(user_id, msg):
         return (
             f"✅ Order confirmed!\n\n"
             f"📦 Product: {order['product']}\n"
-            f"    Quantity {order['quantity']} @ {order['unit_price']:.2f} \n"
-            f"💰 Total: @{order['price']:.2f}\n"
+            f"    Quantity {order['quantity']} X ₱{order['unit_price']:.2f} \n"
+            f"💰 Total: ₱    {order['price']:.2f}\n"
             f"👤 Name: {order['name']}\n"
             f"📍 Address: {order['address']}\n"
             f"📞 Phone: {order['phone']}\n"
@@ -239,19 +239,32 @@ def buyers_summary():
 
 # Sellers View
 @app.route('/sellers')
-def sellers_overview():
-    conn = get_pg_connection()
+def sellers_summary():
+    conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('''
-        SELECT seller, COUNT(DISTINCT name) AS buyer_count, SUM(price) AS total_sales
+    
+    cur.execute("""
+        SELECT seller, COUNT(*)
         FROM orders
         GROUP BY seller
-        ORDER BY total_sales DESC
-    ''')
-    sellers = cur.fetchall()
-    cur.close()
+    """)
+    sellers_data = cur.fetchall()
+
+    # Fetch buyers per seller
+    seller_summaries = []
+    for seller, count in sellers_data:
+        cur.execute("""
+            SELECT DISTINCT buyer_name
+            FROM orders
+            WHERE seller = %s
+            ORDER BY buyer_name
+        """, (seller,))
+        buyers = [row[0] for row in cur.fetchall()]
+        seller_summaries.append((seller, count, buyers))
+
     conn.close()
-    return render_template("sellers.html", sellers=sellers)
+    return render_template('sellers.html', sellers=seller_summaries)
+
 
 
 # Start the app
