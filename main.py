@@ -79,7 +79,7 @@ def handle_user_message(user_id, msg):
         price_match = re.search(r'@?(\d+(\.\d{1,2})?)', product_text)
         price = float(price_match.group(1)) if price_match else None
 
-        product = re.sub(r'@?\d+(\.\d{1,2})?', '', product_text).strip()
+        product = re.sub(r'x?\d+(\.\d{1,2})?', '', product_text).strip()
 
         state = {
         "step": "awaiting_name",
@@ -117,7 +117,7 @@ def handle_user_message(user_id, msg):
             f"📍 Address: {order['address']}\n"
             f"📞 Phone: {order['phone']}\n"
             f"💰 Payment: {order['payment']}\n\n"
-            f"Thank you! We’ll be in touch soon. 😊"
+            f"Thank you! you'll be in touch with the seller soon. 😊"
         )
     else:
         user_states.pop(user_id, None)
