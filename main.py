@@ -74,18 +74,27 @@ def handle_user_message(user_id, msg):
         )
 
         seller_tag = match.group(1)
-        product = re.sub(r'#\w+', '', msg).strip()
-        price_match = re.search(r'@?(\d+(\.\d{2,4})?)', product)
+        product_text = re.sub(r'#\w+', '', msg).strip()
+        # Match formats like 2x150 3x188
+        match_price_qty = re.search(r'(\d+)[xX]₱?(\d+(\.\d{1,2})?)', product_text)
+        if match_price_qty:
+            quantity = int(match_price_qty.group(1))
+            unit_price = float(match_price_qty.group(2))
+            total_price = quantity * unit_price
+        else:
+            quantity = 1
+            unit_price = None
+            total_price = None
+        product = re.sub(r'\d+[xX]₱?\d+(\.\d{1,2})?', '', product_text).strip()
         price = float(price_match.group(1)) if price_match else None
-        quantity_match = re.search(r'quantity?"x[0-9]" ', product)
-        quantity = (quantity_match.group(1) if quantity_match else None)
         state = {
         "step": "awaiting_name",
         "order": {
             "seller": seller_tag,
             "product": product,
-            "price": price,
-            "quantity": quantity
+            "unit_price": unit_price,
+            "quantity": quantity,
+            "price": total_price
         }
         }
         user_states[user_id] = state
