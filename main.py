@@ -240,7 +240,7 @@ def buyers_summary():
 # Sellers View
 @app.route('/sellers')
 def sellers_summary():
-    conn = get_db_connection()
+    conn = get_pg_connection()
     cur = conn.cursor()
     
     cur.execute("""
