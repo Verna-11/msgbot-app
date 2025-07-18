@@ -33,7 +33,11 @@ def init_pg():
             address TEXT,
             phone TEXT,
             payment TEXT,
-            price NUMERIC
+            price NUMERIC,
+            quantity INTEGER,
+            unit_price NUMERIC
+
+
         )
     ''')
     conn.commit()
@@ -119,8 +123,8 @@ def handle_user_message(user_id, msg):
         return (
             f"✅ Order confirmed!\n\n"
             f"📦 Product: {order['product']}\n"
-            f"💰 Price: @{order['price']:.2f}\n"
-            f"    Quantity {order['quantity']}\n"
+            f"    Quantity {order['quantity']} @ {order['unit_price'];.2f} \n"
+            f"💰 Total: @{order['price']:.2f}\n"
             f"👤 Name: {order['name']}\n"
             f"📍 Address: {order['address']}\n"
             f"📞 Phone: {order['phone']}\n"
@@ -136,17 +140,18 @@ def save_order(user_id, order):
     cur = conn.cursor()
     cur.execute('''
         INSERT INTO orders (user_id, seller, product, price, name, address, phone, payment)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
     ''', (
-        user_id,
-        order["seller"],
-        order["product"],
-        order["price"],
-        order["name"],
-        order["address"],
-        order["phone"],
-        order["payment"],
-        #order["quantity"]
+        user_id,         #row0 base 0
+        order["seller"], #row1
+        order["product"],#row2
+        order["price"],#row3
+        order["name"],#row4
+        order["address"],#row5
+        order["phone"],#row6
+        order["payment"],#row7
+        order["quantity"]#row8
+        order["unit_price"]#row9
     ))
     conn.commit()
     cur.close()
