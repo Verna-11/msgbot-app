@@ -86,7 +86,6 @@ def handle_user_message(user_id, msg):
             unit_price = None
             total_price = None
         product = re.sub(r'\d+[xX]₱?\d+(\.\d{1,2})?', '', product_text).strip()
-        price = float(price_match.group(1)) if price_match else None
         state = {
         "step": "awaiting_name",
         "order": {
