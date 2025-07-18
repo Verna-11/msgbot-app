@@ -51,7 +51,7 @@
         {% for row in summary %}
         <tr>
             <td>{{ row[0] }}</td>
-            <td>₱{{ "%.2f"|format(row[1]) }}</td>
+            <td>₱{{ "%.2f"|format(row[1] or 0) }}</td>
         </tr>
         {% endfor %}
     </table>

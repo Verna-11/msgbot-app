@@ -191,10 +191,10 @@ def buyers_summary():
     conn = get_pg_connection()
     cur = conn.cursor()
     cur.execute('''
-        SELECT name, SUM(price) AS total_spent
+        SELECT buyer_name, SUM(COALESCE(price, 0) * COALESCE(quantity, 1)) AS total
         FROM orders
-        GROUP BY name
-        ORDER BY total_spent DESC
+        WHERE seller = %s
+        GROUP BY buyer_name
     ''')
     summary = cur.fetchall()
     cur.close()
