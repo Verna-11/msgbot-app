@@ -77,7 +77,7 @@ def handle_user_message(user_id, msg):
         product = re.sub(r'#\w+', '', msg).strip()
         price_match = re.search(r'@?(\d+(\.\d{2,4})?)', product)
         price = float(price_match.group(1)) if price_match else None
-        quantity_match = re.search(r"x[0-9]",product)
+        quantity_match = re.search(r'quantity?"x[0-9]" ', product)
         quantity = (quantity_match.group(1) if quantity_match else None)
         state = {
         "step": "awaiting_name",
