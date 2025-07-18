@@ -191,7 +191,7 @@ def buyers_summary():
     conn = get_pg_connection()
     cur = conn.cursor()
     cur.execute('''
-        SELECT name, COUNT(DISTINCT seller) SUM(price) AS total_spent
+        SELECT name, COUNT(DISTINCT seller) AS from_seller SUM(price) AS total_spent
         FROM orders
         GROUP BY name
         ORDER BY total_spent DESC
