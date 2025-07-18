@@ -64,6 +64,23 @@ def webhook():
                 send_message(sender_id, response)
     return "ok", 200
 
+#get name in facebook profile
+
+def get_user_full_name(psid, page_access_token):
+    url = f"https://graph.facebook.com/v18.0/{psid}"
+    params = {
+        "fields": "first_name,last_name",
+        "access_token": page_access_token
+    }
+    try:
+        response = requests.get(url, params=params)
+        if response.status_code == 200:
+            data = response.json()
+            return f"{data.get('first_name', '')} {data.get('last_name', '')}".strip()
+    except Exception as e:
+        print("Error fetching user name:", e)
+    return None
+
 def handle_user_message(user_id, msg):
     state = user_states.get(user_id, {})
     if 'step' not in state:
@@ -125,51 +142,69 @@ def handle_user_message(user_id, msg):
             unit_price = None
             total_price = None
             product = product_text.strip()
+            
+        full_name = get_user_full_name(sender_id, PAGE_ACCESS_TOKEN)
+        state = user_states.get(user_id)
         
-        state = {
-        "step": "awaiting_name",
-        "order": {
-            "seller": seller_tag,
-            "product": product,
-            "unit_price": unit_price,
-            "quantity": quantity,
-            "price": total_price
-        }
-        }
-        user_states[user_id] = state
-        return f"Thanks for your order for '{product}' from seller #{seller_tag}.\nMay I have your full name?"
-    
-    elif state["step"] == "awaiting_name":
-        state["order"]["name"] = msg
-        state["step"] = "awaiting_address"
-        return "Thanks! What is your complete delivery address?"
-    elif state["step"] == "awaiting_address":
-        state["order"]["address"] = msg
-        state["step"] = "awaiting_phone"
-        return "Noted. What's your phone number? o alam na po ni seller"
-    elif state["step"] == "awaiting_phone":
-        state["order"]["phone"] = msg
-        state["step"] = "awaiting_payment"
-        return "Last step Bank Transfer, Maya, Gcash or Cash on Delivery?"
-    elif state["step"] == "awaiting_payment":
-        state["order"]["payment"] = msg
-        order = state["order"]
-        save_order(user_id, order)
-        user_states.pop(user_id)
-        return (
-            f"✅ Order confirmed!\n\n"
-            f"📦 Product: {order['product']}\n"
-            f"    Quantity {order['quantity']} X ₱{order['unit_price']:.2f} \n"
-            f"💰 Total: ₱    {order['price']:.2f}\n"
-            f"👤 Name: {order['name']}\n"
-            f"📍 Address: {order['address']}\n"
-            f"📞 Phone: {order['phone']}\n"
-            f"💰 Payment: {order['payment']}\n\n"
-            f"Thank you! you'll be in touch with the seller soon. 😊"
-        )
-    else:
-        user_states.pop(user_id, None)
-        return "Oops, something went wrong. Let's start over. Please send your order again."
+        if not state:
+            # New order: try to get user full name via Facebook Graph
+            full_name = get_user_full_name(sender_id, PAGE_ACCESS_TOKEN)
+            state = {
+                "step": "awaiting_address" if full_name else "awaiting_name",
+                "order": {
+                    "seller": seller_tag,
+                    "product": product,
+                    "unit_price": unit_price,
+                    "quantity": quantity,
+                    "price": total_price,
+                    "buyer_name": full_name or "Unknown"
+                }
+            }
+            user_states[user_id] = state
+        
+            if full_name:
+                return f"Thanks, {full_name}! 🛒\nYour order for '{product}' from seller #{seller_tag} has been recorded.\n\nPlease provide your complete delivery address."
+            else:
+                return f"Thanks for your order for '{product}' from seller #{seller_tag}.\n⚠️ I couldn't get your name automatically. Could you type it in?"
+        
+        # Continuing flow based on state["step"]
+        elif state["step"] == "awaiting_name":
+            state["order"]["name"] = msg
+            state["step"] = "awaiting_address"
+            return "Thanks! What is your complete delivery address?"
+        
+        elif state["step"] == "awaiting_address":
+            state["order"]["address"] = msg
+            state["step"] = "awaiting_phone"
+            return "Noted. What's your phone number? o alam na po ni seller"
+        
+        elif state["step"] == "awaiting_phone":
+            state["order"]["phone"] = msg
+            state["step"] = "awaiting_payment"
+            return "Last step: Bank Transfer, Maya, Gcash or Cash on Delivery?"
+        
+        elif state["step"] == "awaiting_payment":
+            state["order"]["payment"] = msg
+            order = state["order"]
+            save_order(user_id, order)
+            user_states.pop(user_id, None)
+            return (
+                f"✅ Order confirmed!\n\n"
+                f"📦 Product: {order['product']}\n"
+                f"    Quantity {order['quantity']} X ₱{order['unit_price']:.2f} \n"
+                f"💰 Total: ₱{order['price']:.2f}\n"
+                f"👤 Name: {order.get('name', order.get('buyer_name', ''))}\n"
+                f"📍 Address: {order['address']}\n"
+                f"📞 Phone: {order['phone']}\n"
+                f"💰 Payment: {order['payment']}\n\n"
+                f"Thank you! The seller will be in touch with you soon. 😊"
+            )
+        
+        # Fallback
+        else:
+            user_states.pop(user_id, None)
+            return "Oops, something went wrong. Let's start over. Please send your order again."
+
 
 def save_order(user_id, order):
     conn = get_pg_connection()
