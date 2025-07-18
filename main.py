@@ -78,15 +78,15 @@ def handle_user_message(user_id, msg):
         product_text = re.sub(r'#\w+', '', msg).strip()
         price_match = re.search(r'@?(\d+(\.\d{1,2})?)', product_text)
         price = float(price_match.group(1)) if price_match else None
-
-        product = re.sub(r'x?\d+(\.\d{1,2})?', '', product_text).strip()
-
+        quantity_match = re.search(r"x[0-9]",product_text)
+        quantity = (quantity_match.group(1) if quantity_match else None)
         state = {
         "step": "awaiting_name",
         "order": {
             "seller": seller_tag,
             "product": product,
-            "price": price
+            "price": price,
+            "quantity": quantity
         }
         }
         user_states[user_id] = state
@@ -138,7 +138,7 @@ def save_order(user_id, order):
         order["address"],
         order["phone"],
         order["payment"],
-         #default 0 if none
+        #order["quantity"]
     ))
     conn.commit()
     cur.close()
