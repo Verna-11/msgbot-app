@@ -195,7 +195,7 @@ def buyers_summary():
         FROM orders
         WHERE seller = %s
         GROUP BY buyer_name
-    ''')
+    ''',(seller,))
     summary = cur.fetchall()
     cur.close()
     conn.close()
