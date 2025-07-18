@@ -140,7 +140,7 @@ def save_order(user_id, order):
     cur = conn.cursor()
     cur.execute('''
         INSERT INTO orders (user_id, seller, product, price, name, address, phone, payment)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     ''', (
         user_id,         #row0 base 0
         order["seller"], #row1
