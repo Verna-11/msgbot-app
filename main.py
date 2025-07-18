@@ -123,7 +123,7 @@ def handle_user_message(user_id, msg):
         return (
             f"✅ Order confirmed!\n\n"
             f"📦 Product: {order['product']}\n"
-            f"    Quantity {order['quantity']} @ {order['unit_price'];.2f} \n"
+            f"    Quantity {order['quantity']} @ {order['unit_price']:.2f} \n"
             f"💰 Total: @{order['price']:.2f}\n"
             f"👤 Name: {order['name']}\n"
             f"📍 Address: {order['address']}\n"
