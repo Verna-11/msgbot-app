@@ -168,11 +168,11 @@ def handle_user_message(user_id, msg):
                 state["step"] = "awaiting_name"
                 return f"Thanks for your order for '{product}' from seller #{seller_tag}.\n⚠️ I couldn't get your name automatically. Could you type it in?"
         
-            # Continuing flow based on state["step"]
-            # elif state["step"] == "awaiting_name":
-            #     state["order"]["name"] = msg
-            #     state["step"] = "awaiting_address"
-            #     return "Thanks! What is your complete delivery address?"
+             Continuing flow based on state["step"]
+             elif state["step"] == "awaiting_name":
+                 state["order"]["name"] = msg
+                 state["step"] = "awaiting_address"
+                 return "Thanks! What is your complete delivery address?"
             
             elif state["step"] == "awaiting_address":
                 state["order"]["address"] = msg
