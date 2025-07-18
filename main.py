@@ -71,25 +71,46 @@ def handle_user_message(user_id, msg):
         if not match:
             user_states.pop(user_id, None)  # clear any existing state
             return (
-            "⚠️ Sorry, hindi ko po naintindihan wala po tag #.\n"
-            "Please lagyan po natin ng hashtag si seller # example:\n"
-            "`#Sophialive 2x Lip Balm`\n\n"
+            "⚠️ Sorry, hindi ko po naintindihan\n"
+            "Please lagyan po natin ng \n"
+            "hashtag si #seller example:\n"
+            "#Sophialive Lip Gloss\n\n"
             "Subukan po uli"
         )
 
         seller_tag = match.group(1)
         product_text = re.sub(r'#\w+', '', msg).strip()
-        # Match formats like 2x150 3x188
-        match_price_qty = re.search(r'(\d+)[xX]₱?(\d+(\.\d{1,2})?)', product_text)
-        if match_price_qty:
-            quantity = int(match_price_qty.group(1))
-            unit_price = float(match_price_qty.group(2))
+        
+        # Match formats like: 2x100, 2X₱100.00
+        match_qty_price1 = re.search(r'(\d+)[xX]₱?(\d+(\.\d{1,2})?)', product_text)
+        
+        # Match formats like: x2 ₱100 or x2 100
+        match_qty_price2 = re.search(r'[xX](\d+)\s*₱?(\d+(\.\d{1,2})?)', product_text)
+        
+        # Match single price: 100 or ₱100
+        match_single_price = re.search(r'₱?(\d+(\.\d{1,2})?)', product_text)
+        
+        if match_qty_price1:
+            quantity = int(match_qty_price1.group(1))
+            unit_price = float(match_qty_price1.group(2))
             total_price = quantity * unit_price
+            product = re.sub(r'\d+[xX]₱?\d+(\.\d{1,2})?', '', product_text).strip()
+        elif match_qty_price2:
+            quantity = int(match_qty_price2.group(1))
+            unit_price = float(match_qty_price2.group(2))
+            total_price = quantity * unit_price
+            product = re.sub(r'[xX]\d+\s*₱?\d+(\.\d{1,2})?', '', product_text).strip()
+        elif match_single_price:
+            quantity = 1
+            unit_price = float(match_single_price.group(1))
+            total_price = unit_price
+            product = re.sub(r'₱?\d+(\.\d{1,2})?', '', product_text).strip()
         else:
             quantity = 1
             unit_price = None
             total_price = None
-        product = re.sub(r'\d+[xX]₱?\d+(\.\d{1,2})?', '', product_text).strip()
+            product = product_text.strip()
+        
         state = {
         "step": "awaiting_name",
         "order": {
