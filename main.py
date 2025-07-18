@@ -98,11 +98,11 @@ def handle_user_message(user_id, msg):
     elif state["step"] == "awaiting_address":
         state["order"]["address"] = msg
         state["step"] = "awaiting_phone"
-        return "Noted. What's your phone number? or \n the Seller knows how to contact you reply with N/A"
+        return "Noted. What's your phone number? o alam na po ni seller"
     elif state["step"] == "awaiting_phone":
         state["order"]["phone"] = msg
         state["step"] = "awaiting_price"
-        return "Mag kano po ito? \n Pwede po wag ilagay \n usap nalang po kayo ni seller"
+        return "Mag kano po ito? reply 0 kung mag uusap nalang po kayo ni seller"
     elif state["step"] == "awaiting_price":
         state["order"]["price"] = msg
         state["step"] = "awaiting_payment"
