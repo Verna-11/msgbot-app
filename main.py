@@ -93,7 +93,7 @@ def handle_user_message(user_id, msg):
     
     elif state["step"] == "awaiting_name":
         state["order"]["name"] = msg
-        state["step"] = "awaiting_address"
+        state["step"] = "awaiting_price"
         return "Thanks! What is your complete delivery address?"
     elif state["step"] == "awaiting_address":
         state["order"]["address"] = msg
@@ -101,8 +101,12 @@ def handle_user_message(user_id, msg):
         return "Noted. What's your phone number? or \n the Seller knows how to contact you reply with N/A"
     elif state["step"] == "awaiting_phone":
         state["order"]["phone"] = msg
+        state["step"] = "awaiting_price"
+        return "Mag kano po ito? \n Pwede po wag ilagay \n usap nalang po kayo ni seller"
+    elif state["step"] == "awaiting_price":
+        state["order"]["price"] = msg
         state["step"] = "awaiting_payment"
-        return "Almost done. Bank Transfer Maya \n Gcash or Cash on Delivery?"
+        return "Last step Bank Transfer, Maya, Gcash or Cash on Delivery?"
     elif state["step"] == "awaiting_payment":
         state["order"]["payment"] = msg
         order = state["order"]
@@ -126,7 +130,7 @@ def save_order(user_id, order):
     conn = get_pg_connection()
     cur = conn.cursor()
     cur.execute('''
-        INSERT INTO orders (user_id, seller, product, name, address, phone, payment,price)
+        INSERT INTO orders (user_id, seller, product, price, name, address, phone, payment)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
     ''', (
         user_id,
