@@ -161,11 +161,9 @@ def handle_user_message(user_id, msg):
             user_states[user_id] = state
         
             if full_name:
-                state["order"]["address"] = msg
                 state["step"] = "awaiting_phone"
                 return f"Thanks, {full_name}! 🛒\nYour order for '{product}' from seller #{seller_tag} has been recorded.\n\nPlease provide your complete delivery address."
             else:
-                state["order"]["name"] = msg
                 state["step"] = "awaiting_address"
                 return f"Thanks for your order for '{product}' from seller #{seller_tag}.\n⚠️ I couldn't get your name automatically. Could you type it in?"
         
