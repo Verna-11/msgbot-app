@@ -161,49 +161,50 @@ def handle_user_message(user_id, msg):
             user_states[user_id] = state
         
             if full_name:
-                state["step"] = "awaiting_phone"
-                return f"Thanks, {full_name}! 🛒\nYour order for '{product}' from seller #{seller_tag} has been recorded.\n\nPlease provide your complete delivery address."
-            else:
                 state["step"] = "awaiting_address"
+                return f"Thanks, {full_name}! 🛒\nYour order for '{product}' from seller #{seller_tag} has been recorded.\n\nPlease provide your complete delivery address."
+            
+            elif not full_name:
+                state["step"] = "awaiting_name"
                 return f"Thanks for your order for '{product}' from seller #{seller_tag}.\n⚠️ I couldn't get your name automatically. Could you type it in?"
         
-        # Continuing flow based on state["step"]
-        elif state["step"] == "awaiting_name":
-            state["order"]["name"] = msg
-            state["step"] = "awaiting_address"
-            return "Thanks! What is your complete delivery address?"
-        
-        elif state["step"] == "awaiting_address":
-            state["order"]["address"] = msg
-            state["step"] = "awaiting_phone"
-            return "Noted. What's your phone number? o alam na po ni seller"
-        
-        elif state["step"] == "awaiting_phone":
-            state["order"]["phone"] = msg
-            state["step"] = "awaiting_payment"
-            return "Last step: Bank Transfer, Maya, Gcash or Cash on Delivery?"
-        
-        elif state["step"] == "awaiting_payment":
-            state["order"]["payment"] = msg
-            order = state["order"]
-            save_order(user_id, order)
-            user_states.pop(user_id, None)
-            return (
-                f"✅ Order confirmed!\n\n"
-                f"📦 Product: {order['product']}\n"
-                f"    Quantity {order['quantity']} X ₱{order['unit_price']:.2f} \n"
-                f"💰 Total: ₱{order['price']:.2f}\n"
-                f"👤 Name: {order.get('name', order.get('buyer_name', ''))}\n"
-                f"📍 Address: {order['address']}\n"
-                f"📞 Phone: {order['phone']}\n"
-                f"💰 Payment: {order['payment']}\n\n"
-                f"Thank you! The seller will be in touch with you soon. 😊"
-            )
-        
-        # Fallback
-        else:
-            user_states.pop(user_id, None)
-            return "Oops, something went wrong. Let's start over. Please send your order again."
+            # Continuing flow based on state["step"]
+            # elif state["step"] == "awaiting_name":
+            #     state["order"]["name"] = msg
+            #     state["step"] = "awaiting_address"
+            #     return "Thanks! What is your complete delivery address?"
+            
+            elif state["step"] == "awaiting_address":
+                state["order"]["address"] = msg
+                state["step"] = "awaiting_phone"
+                return "Noted. What's your phone number? o alam na po ni seller"
+            
+            elif state["step"] == "awaiting_phone":
+                state["order"]["phone"] = msg
+                state["step"] = "awaiting_payment"
+                return "Last step: Bank Transfer, Maya, Gcash or Cash on Delivery?"
+            
+            elif state["step"] == "awaiting_payment":
+                state["order"]["payment"] = msg
+                order = state["order"]
+                save_order(user_id, order)
+                user_states.pop(user_id, None)
+                return (
+                    f"✅ Order confirmed!\n\n"
+                    f"📦 Product: {order['product']}\n"
+                    f"    Quantity {order['quantity']} X ₱{order['unit_price']:.2f} \n"
+                    f"💰 Total: ₱{order['price']:.2f}\n"
+                    f"👤 Name: {order.get('name', order.get('buyer_name', ''))}\n"
+                    f"📍 Address: {order['address']}\n"
+                    f"📞 Phone: {order['phone']}\n"
+                    f"💰 Payment: {order['payment']}\n\n"
+                    f"Thank you! The seller will be in touch with you soon. 😊"
+                )
+            
+            # Fallback
+            else:
+                user_states.pop(user_id, None)
+                return "Oops, something went wrong. Let's start over. Please send your order again."
 
 
 def save_order(user_id, order):
