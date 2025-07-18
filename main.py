@@ -80,6 +80,7 @@ def handle_user_message(user_id, msg):
         price = float(price_match.group(1)) if price_match else None
 
         product = re.sub(r'@?\d+(\.\d{1,2})?', '', product_text).strip()
+
         state = {
         "step": "awaiting_name",
         "order": {
@@ -101,10 +102,6 @@ def handle_user_message(user_id, msg):
         return "Noted. What's your phone number? o alam na po ni seller"
     elif state["step"] == "awaiting_phone":
         state["order"]["phone"] = msg
-        state["step"] = "awaiting_price"
-        return "Mag kano po ito? reply 0 kung mag uusap nalang po kayo ni seller"
-    elif state["step"] == "awaiting_price":
-        state["order"]["price"] = msg
         state["step"] = "awaiting_payment"
         return "Last step Bank Transfer, Maya, Gcash or Cash on Delivery?"
     elif state["step"] == "awaiting_payment":
