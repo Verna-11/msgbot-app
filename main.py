@@ -88,28 +88,27 @@ def handle_user_message(user_id, msg):
         (r'₱?(\d+(\.\d{1,2})?)\s*(\d+)[xX]', lambda m: (int(m.group(3)), float(m.group(1)))),
         (r'₱?(\d+(\.\d{1,2})?)', lambda m: (1, float(m.group(1)))),
         ]
+        # Match formats like: 2x100, 2X₱100.00
+        match_qty_price1 = re.search(r'(\d+)[xX]₱?(\d+(\.\d{1,2})?)', product_text)
+        
+        # Match formats like: x2 ₱100 or x2 100
+        match_qty_price2 = re.search(r'[xX](\d+)\s*₱?(\d+(\.\d{1,2})?)', product_text)
 
+        # Pattern 4: price then quantity, like "300 x4" or "₱300 x4"
+        match_price_qty = re.search(r'₱?(\d+(\.\d{1,2})?)\s*[xX](\d+)', product_text)
+        
+        # Format 4: "300 4x" or "₱300 4x"
+        match_price_qty_reverse = re.search(r'₱?(\d+(\.\d{1,2})?)\s*(\d+)[xX]', product_text)
+        # Match single price: 100 or ₱100
+        match_single_price = re.search(r'₱?(\d+(\.\d{1,2})?)', product_text)
+            
         for pattern, extractor in patterns:
             match = re.search(pattern, product_text)
             if match:
                 quantity, unit_price = extractor(match)
                 total_price = quantity * unit_price
                 product = product_text.replace(match.group(0), '').strip()
-                
-            # Match formats like: 2x100, 2X₱100.00
-            match_qty_price1 = re.search(r'(\d+)[xX]₱?(\d+(\.\d{1,2})?)', product_text)
-            
-            # Match formats like: x2 ₱100 or x2 100
-            match_qty_price2 = re.search(r'[xX](\d+)\s*₱?(\d+(\.\d{1,2})?)', product_text)
-    
-            # Pattern 4: price then quantity, like "300 x4" or "₱300 x4"
-            match_price_qty = re.search(r'₱?(\d+(\.\d{1,2})?)\s*[xX](\d+)', product_text)
-            
-            # Format 4: "300 4x" or "₱300 4x"
-            match_price_qty_reverse = re.search(r'₱?(\d+(\.\d{1,2})?)\s*(\d+)[xX]', product_text)
-            # Match single price: 100 or ₱100
-            match_single_price = re.search(r'₱?(\d+(\.\d{1,2})?)', product_text)
-            
+
             elif match_qty_price1:
                 quantity = int(match_qty_price1.group(1))
                 unit_price = float(match_qty_price1.group(2))
