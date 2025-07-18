@@ -142,13 +142,11 @@ def handle_user_message(user_id, msg):
             unit_price = None
             total_price = None
             product = product_text.strip()
-            
-        full_name = get_user_full_name(sender_id, PAGE_ACCESS_TOKEN)
         state = user_states.get(user_id)
         
         if not state:
             # New order: try to get user full name via Facebook Graph
-            full_name = get_user_full_name(sender_id, PAGE_ACCESS_TOKEN)
+            full_name = get_user_full_name(user_id, PAGE_ACCESS_TOKEN)
             state = {
                 "step": "awaiting_address" if full_name else "awaiting_name",
                 "order": {
