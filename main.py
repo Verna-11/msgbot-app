@@ -132,11 +132,12 @@ def save_order(user_id, order):
         user_id,
         order["seller"],
         order["product"],
+        order["price"],
         order["name"],
         order["address"],
         order["phone"],
         order["payment"],
-        order["price"] #default 0 if none
+         #default 0 if none
     ))
     conn.commit()
     cur.close()
