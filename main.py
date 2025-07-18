@@ -150,7 +150,7 @@ def save_order(user_id, order):
         order["address"],#row5
         order["phone"],#row6
         order["payment"],#row7
-        order["quantity"]#row8
+        order["quantity"],#row8
         order["unit_price"]#row9
     ))
     conn.commit()
