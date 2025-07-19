@@ -32,7 +32,7 @@
     {% for row in orders %}
     <tr>
       <td>{{ row[0] }}</td>
-      <td><a href="/?seller={{ row[1] }}">#{{ row[1]|capitalize }}</a></td>
+      <td><a href="/?seller={{ row[1] }}">#{{ row[1] }}</a></td>
       <td>{{ row[2] }}</td>
       <td><a href="/buyers">{{ row[3]}}</a></td>
       <td>{{ row[5] }}</td>
