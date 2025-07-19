@@ -175,7 +175,7 @@ def handle_user_message(user_id, msg):
             f"📦 Product: {order['product']}\n"
             f"    Quantity {order['quantity']} X ₱{order['unit_price']:.2f} \n"
             f"💰 Total: ₱    {order['price']:.2f}\n"
-            f"👤 Name: {order['name']}\n"
+            f"👤 Name: {order['buyer_name']}\n"
             f"📍 Address: {order['address']}\n"
             f"📞 Phone: {order['phone']}\n"
             f"💰 Payment: {order['payment']}\n\n"
