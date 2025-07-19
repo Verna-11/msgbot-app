@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from flask import Flask, request, render_template
 import requests, re
 import os
@@ -19,6 +20,14 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 def get_pg_connection():
     return psycopg2.connect(DATABASE_URL, sslmode="require")
 
+def delete_old_orders():
+    conn = get_pg_connection()
+    cur = conn.cursor()
+    one_week_ago = datetime.utcnow() - timedelta(days=7)
+    cur.execute("DELETE FROM orders WHERE created_at < %s", (one_week_ago,))
+    conn.commit()
+    cur.close()
+    conn.close()
 #data base connection and commit
 def init_pg():
     conn = get_pg_connection()
@@ -294,9 +303,15 @@ def sellers_summary():
     return render_template('sellers.html', sellers=seller_summaries)
 
 
+#scheduler deletion
+from apscheduler.schedulers.background import BackgroundScheduler
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(delete_old_orders, 'interval', days=1)
+scheduler.start()
 
 # Start the app
-
 if __name__ == '__main__':
+    delete_old_orders()
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)
