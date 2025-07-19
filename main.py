@@ -64,7 +64,7 @@ def webhook():
                 send_message(sender_id, response)
     return "ok", 200
 
-#get name in facebooke
+#get name in facebook
 def get_user_full_name(psid, page_access_token):
     url = f"https://graph.facebook.com/v18.0/{psid}"
     params = {
@@ -141,8 +141,12 @@ def handle_user_message(user_id, msg):
             unit_price = None
             total_price = None
             product = product_text.strip()
+
+        # ✅ Get full name from Facebook API
+        full_name = get_user_full_name(user_id, PAGE_ACCESS_TOKEN)
+        if not full_name:
+            full_name = "Unknown"
         
-        full_name = get_user_full_name(user_id,PAGE_ACCESS_TOKEN)
         state = {
         "step": "awaiting_address",
         "order": {
