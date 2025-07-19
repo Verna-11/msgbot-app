@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Bot and Web App{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Order Dashboard</h1>
+        <nav>
+            <a href="/">Dashboard</a> |
+            <a href="/buyers">Buyers</a> |
+            <a href="/sellers">Sellers</a>
+        </nav>
+        <hr>
+    </header>
+
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <footer>
+        <hr>
+        <p>&copy; {{ current_year }} My Live Seller App</p>
+    </footer>
+</body>
+</html>

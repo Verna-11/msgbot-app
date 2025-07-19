@@ -1,49 +1,7 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Seller Dashboard</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 2rem;
-            background: #f4f4f4;
-        }
-        h1 {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-        table {
-            width: 80%;
-            margin: auto;
-            border-collapse: collapse;
-            background: white;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        th, td {
-            padding: 1rem;
-            border: 1px solid #ccc;
-            text-align: left;
-        }
-        th {
-            background: #007bff;
-            color: white;
-        }
-        tr:nth-child(even) {
-            background: #f9f9f9;
-        }
-        a {
-            color: #007bff;
-            text-decoration: none;
-        }
-        a:hover {
-            text-decoration: underline;
-        }
-        .back-link {
-            text-align: center;
-            margin-top: 2rem;
-        }
-    </style>
-</head>
+{% extends "layout.html" %}
+{% block title %}Buyers Summary{% endblock %}
+
+{% block content %}
 <body>
     <h2 style="text-align:center;">Sellers and Buyers</h2>
 
@@ -76,5 +34,9 @@
             {% endfor %}
         </tbody>
     </table>
+<div class="back-link">
+    <a href="/">← Back to Dashboard</a>
+</div>
 </body>
+{% endblock %}
 </html>
