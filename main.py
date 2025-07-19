@@ -142,9 +142,11 @@ def handle_user_message(user_id, msg):
             total_price = None
             product = product_text.strip()
         
+        full_name = get_user_full_name(user_id,PAGE_ACCESS_TOKEN)
         state = {
         "step": "awaiting_address",
         "order": {
+            "buyer_name": full_name,
             "seller": seller_tag,
             "product": product,
             "unit_price": unit_price,
@@ -154,7 +156,7 @@ def handle_user_message(user_id, msg):
         }
         user_states[user_id] = state
         return f"Thanks for your order for '{product}' from seller #{seller_tag}.\nMay I have your address?"
-        
+
     elif state["step"] == "awaiting_address":
         state["order"]["address"] = msg
         state["step"] = "awaiting_phone"
