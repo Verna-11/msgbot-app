@@ -175,7 +175,7 @@ def handle_user_message(user_id, msg):
             f"📦 Product: {order['product']}\n"
             f"    Quantity {order['quantity']} X ₱{order['unit_price']:.2f} \n"
             f"💰 Total: ₱    {order['price']:.2f}\n"
-            f"👤 Name: {order['buyer_name']}\n"
+            f"👤 Name: {order['name']}\n"
             f"📍 Address: {order['address']}\n"
             f"📞 Phone: {order['phone']}\n"
             f"💰 Payment: {order['payment']}\n\n"
@@ -196,7 +196,7 @@ def save_order(user_id, order):
         order["seller"], #row1
         order["product"],#row2
         order["price"],#row3
-        order["buyer_name"],#row4
+        order["name"],#row4
         order["address"],#row5
         order["phone"],#row6
         order["payment"],#row7
