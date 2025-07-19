@@ -47,24 +47,24 @@
 </head>
 <body>
     <h2>Buyers Summary{% if seller %} for #{{ seller }}{% endif %}</h2>
-<table>
-  <tr>
-    <th>Buyer Name</th>
-    <th>Total Orders</th>
-    <th>Total Spent (₱)</th>
-  </tr>
-  {% for name, total_orders, total_spent in summary %}
-  <tr>
-    <td>{{ name }}</td>
-    <td>{{ total_orders }}</td>
-    <td>₱{{ '{:.2f}'.format(total_spent) }}</td>
-  </tr>
-  {% endfor %}
+    <table>
+      <tr>
+        <th>Buyer Name</th>
+        <th>Total Orders</th>
+        <th>Total Spent (₱)</th>
+    </tr>
+    {% for name, total_orders, total_spent in summary %}
+    <tr>
+        <td>{{ name }}</td>
+        <td>{{ total_orders }}</td>
+        <td>₱{{ '{:.2f}'.format(total_spent or 0) }}</td>
+    </tr>
+    {% endfor %}
 </table>
 
 
-    <div class="back-link">
-        <a href="/">← Back to Dashboard</a>
-    </div>
+<div class="back-link">
+    <a href="/">← Back to Dashboard</a>
+</div>
 </body>
 </html>
