@@ -36,6 +36,7 @@ def init_pg():
             price NUMERIC,
             quantity INTEGER,
             unit_price NUMERIC
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
 
         )
