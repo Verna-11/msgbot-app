@@ -104,7 +104,7 @@ def handle_user_message(user_id, msg):
             "Subukan po uli"
         )
 
-        seller_tag = match.group(1)
+        seller_tag = match.group(1).lower()
         product_text = re.sub(r'#\w+', '', msg).strip()
 
         # Match formats like: 2x100, 2X₱100.00
@@ -165,7 +165,7 @@ def handle_user_message(user_id, msg):
         }
         }
         user_states[user_id] = state
-        return f"Thanks for your order for '{product}' from seller #{seller_tag}.\nMay I have your address?"
+        return f"Thanks for your order for '{product}' from seller #{seller_tag.capitalize()}.\nMay I have your address?"
 
     elif state["step"] == "awaiting_address":
         state["order"]["address"] = msg
@@ -234,6 +234,9 @@ def send_message(recipient_id, message_text):
 @app.route('/')
 def dashboard():
     seller = request.args.get("seller")
+    if seller:
+        seller = seller.lower()
+        
     conn = get_pg_connection()
     cur = conn.cursor()
     if seller:
