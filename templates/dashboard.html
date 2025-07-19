@@ -1,12 +1,20 @@
-{% extends "layout.html" %}
-{% block title %}Buyers Summary{% endblock %}
-
-{% block content %}
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Live Seller Dashboard</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    h1 { margin-bottom: 10px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { padding: 8px; border: 1px solid #ccc; text-align: left; }
+    th { background-color: #f5f5f5; }
+  </style>
+</head>
 <body>
   <h1>Live Dashboard</h1>
   <form method="get">
     <label>Filter by seller tag:</label>
-    <input name="seller" placeholder="e.g. SophiaLive1101" value="{{ seller or '' }}">
+    <input name="seller" placeholder="e.g. Jane123" value="{{ seller or '' }}">
     <button type="submit">Search</button>
     <a href="/">Reset</a>
   </form>
@@ -34,5 +42,4 @@
     {% endfor %}
   </table>
 </body>
-{% endblock %}
 </html>
