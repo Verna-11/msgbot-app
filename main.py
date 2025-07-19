@@ -118,17 +118,17 @@ def handle_user_message(user_id, msg):
             product = re.sub(r'\d+[xX]₱?\d+(\.\d{1,2})?', '', product_text).strip()
         elif match_qty_price2:
             quantity = int(match_qty_price2.group(1))
-            unit_price = float(match_qty_price2.group(2))
+            unit_price = float(match_qty_price2.group(3))
             total_price = quantity * unit_price
             product = re.sub(r'[xX]\d+\s*₱?\d+(\.\d{1,2})?', '', product_text).strip()
         elif match_price_qty:
             unit_price = float(match_price_qty.group(1))
-            quantity = int(match_price_qty.group(3))
+            quantity = int(match_price_qty.group(4))
             total_price = quantity * unit_price
             product = re.sub(r'₱?\d+(\.\d{1,2})?\s*[xX]\d+', '', product_text).strip()
         elif match_price_qty_reverse:
             unit_price = float(match_price_qty_reverse.group(1))
-            quantity = int(match_price_qty_reverse.group(3))
+            quantity = int(match_price_qty_reverse.group(5))
             total_price = quantity * unit_price
             product = product_text.replace(match_price_qty_reverse.group(0), '').strip()
         elif match_single_price:

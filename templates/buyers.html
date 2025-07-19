@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>Buyer Summary</title>
+    <title>Sellers Overview</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -11,10 +11,11 @@
         }
         h1 {
             text-align: center;
+            margin-bottom: 2rem;
         }
         table {
             width: 80%;
-            margin: 2rem auto;
+            margin: auto;
             border-collapse: collapse;
             background: white;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
@@ -31,30 +32,37 @@
         tr:nth-child(even) {
             background: #f9f9f9;
         }
-        .back-link {
-            text-align: center;
-            margin-top: 1rem;
-        }
-        .back-link a {
+        a {
             color: #007bff;
             text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+        .back-link {
+            text-align: center;
+            margin-top: 2rem;
         }
     </style>
 </head>
 <body>
-    <h1>🧾 Total Orders per Buyer</h1>
-    <table>
-        <tr>
-            <th>👤 Buyer Name</th>
-            <th>💰 Total Spent</th>
-        </tr>
-        {% for row in summary %}
-        <tr>
-            <td>{{ row[0] }}</td>
-            <td>₱{{ "%.2f"|format(row[1] or 0) }}</td>
-        </tr>
-        {% endfor %}
-    </table>
+    <h2>Buyers Summary{% if seller %} for #{{ seller }}{% endif %}</h2>
+<table>
+  <tr>
+    <th>Buyer Name</th>
+    <th>Total Orders</th>
+    <th>Total Spent (₱)</th>
+  </tr>
+  {% for name, total_orders, total_spent in summary %}
+  <tr>
+    <td>{{ name }}</td>
+    <td>{{ total_orders }}</td>
+    <td>₱{{ '{:.2f}'.format(total_spent) }}</td>
+  </tr>
+  {% endfor %}
+</table>
+
+
     <div class="back-link">
         <a href="/">← Back to Dashboard</a>
     </div>
