@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from flask import Flask, request, render_template
 import requests, re
 import os
@@ -19,6 +20,14 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 def get_pg_connection():
     return psycopg2.connect(DATABASE_URL, sslmode="require")
 
+def delete_old_orders():
+    conn = get_pg_connection()
+    cur = conn.cursor()
+    one_week_ago = datetime.utcnow() - timedelta(days=7)
+    cur.execute("DELETE FROM orders WHERE created_at < %s", (one_week_ago,))
+    conn.commit()
+    cur.close()
+    conn.close()
 #data base connection and commit
 def init_pg():
     conn = get_pg_connection()
@@ -36,6 +45,7 @@ def init_pg():
             price NUMERIC,
             quantity INTEGER,
             unit_price NUMERIC
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
 
         )
@@ -239,13 +249,13 @@ def dashboard():
     conn.close()
     return render_template("dashboard.html", orders=orders, seller=seller)
 
-#  Buyers View
-@app.route('/buyers')
+#buyers view
+app.route('/buyers')
 def buyers_summary():
     conn = get_pg_connection()
     cur = conn.cursor()
     cur.execute('''
-        SELECT name, COUNT(DISTINCT seller) AS from_seller SUM(price) AS total_spent
+        SELECT name, COUNT(DISTINCT seller) AS from_seller, SUM(price) AS total_spent
         FROM orders
         GROUP BY name
         ORDER BY total_spent DESC
@@ -261,32 +271,42 @@ def sellers_summary():
     conn = get_pg_connection()
     cur = conn.cursor()
     
+    # First, get all sellers with order count
     cur.execute("""
-        SELECT seller, COUNT(*)
+        SELECT seller, COUNT(*) as order_count
         FROM orders
         GROUP BY seller
+        ORDER BY order_count DESC
     """)
     sellers_data = cur.fetchall()
 
-    # Fetch buyers per seller
+    # Then get unique buyers for each seller
     seller_summaries = []
-    for seller, count in sellers_data:
+    for seller, order_count in sellers_data:
         cur.execute("""
-            SELECT DISTINCT buyer_name
+            SELECT DISTINCT name
             FROM orders
             WHERE seller = %s
-            ORDER BY buyer_name
+            ORDER BY name
         """, (seller,))
         buyers = [row[0] for row in cur.fetchall()]
-        seller_summaries.append((seller, count, buyers))
+        seller_summaries.append((seller, order_count, buyers))
 
+    cur.close()
     conn.close()
     return render_template('sellers.html', sellers=seller_summaries)
+
+#delete data for 7 days scheduler
+from apscheduler.schedulers.background import BackgroundScheduler
+
+scheduler = BackgroundScheduler()
+scheduler.add_job(delete_old_orders, 'interval', days=1)  # run daily
+scheduler.start()
 
 
 
 # Start the app
-
 if __name__ == '__main__':
+    delete_old_orders()  # cleanup on startup
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port)

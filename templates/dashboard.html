@@ -1,15 +1,7 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>Live Seller Dashboard</title>
-  <style>
-    body { font-family: sans-serif; padding: 20px; }
-    h1 { margin-bottom: 10px; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { padding: 8px; border: 1px solid #ccc; text-align: left; }
-    th { background-color: #f5f5f5; }
-  </style>
-</head>
+{% extends "layout.html" %}
+{% block title %}Buyers Summary{% endblock %}
+
+{% block content %}
 <body>
   <h1>Live Dashboard</h1>
   <form method="get">
@@ -31,7 +23,7 @@
     </tr>
     {% for row in orders %}
     <tr>
-      <td>{{ row[1] }}</td>
+      <td>{{ row[0] }}</td>
       <td>{{ row[2] }}</td>
       <td>{{ row[3] }}</td>
       <td>{{ row[4]}}</td>
@@ -42,4 +34,5 @@
     {% endfor %}
   </table>
 </body>
+{% endblock %}
 </html>
