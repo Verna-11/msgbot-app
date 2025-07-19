@@ -118,17 +118,17 @@ def handle_user_message(user_id, msg):
             product = re.sub(r'\d+[xX]₱?\d+(\.\d{1,2})?', '', product_text).strip()
         elif match_qty_price2:
             quantity = int(match_qty_price2.group(1))
-            unit_price = float(match_qty_price2.group(3))
+            unit_price = float(match_qty_price2.group(2))
             total_price = quantity * unit_price
             product = re.sub(r'[xX]\d+\s*₱?\d+(\.\d{1,2})?', '', product_text).strip()
         elif match_price_qty:
             unit_price = float(match_price_qty.group(1))
-            quantity = int(match_price_qty.group(4))
+            quantity = int(match_price_qty.group(3))
             total_price = quantity * unit_price
             product = re.sub(r'₱?\d+(\.\d{1,2})?\s*[xX]\d+', '', product_text).strip()
         elif match_price_qty_reverse:
             unit_price = float(match_price_qty_reverse.group(1))
-            quantity = int(match_price_qty_reverse.group(5))
+            quantity = int(match_price_qty_reverse.group(3))
             total_price = quantity * unit_price
             product = product_text.replace(match_price_qty_reverse.group(0), '').strip()
         elif match_single_price:
@@ -238,18 +238,31 @@ def dashboard():
 #  Buyers View
 @app.route('/buyers')
 def buyers_summary():
+    seller = request.args.get("seller")  # Optional ?seller=SophiaLive
     conn = get_pg_connection()
     cur = conn.cursor()
-    cur.execute('''
-        SELECT name, COUNT(DISTINCT seller) AS from_seller SUM(price) AS total_spent
-        FROM orders
-        GROUP BY name
-        ORDER BY total_spent DESC
-    ''')
+
+    if seller:
+        cur.execute('''
+            SELECT name, COUNT(*) AS total_orders, SUM(price) AS total_spent
+            FROM orders
+            WHERE seller = %s
+            GROUP BY name
+            ORDER BY total_spent DESC
+        ''', (seller,))
+    else:
+        cur.execute('''
+            SELECT name, COUNT(*) AS total_orders, SUM(price) AS total_spent
+            FROM orders
+            GROUP BY name
+            ORDER BY total_spent DESC
+        ''')
+
     summary = cur.fetchall()
     cur.close()
     conn.close()
-    return render_template("buyers.html", summary=summary)
+    return render_template("buyers.html", summary=summary, seller=seller)
+
 
 # Sellers View
 @app.route('/sellers')
@@ -268,10 +281,10 @@ def sellers_summary():
     seller_summaries = []
     for seller, count in sellers_data:
         cur.execute("""
-            SELECT DISTINCT name
+            SELECT DISTINCT buyer_name
             FROM orders
             WHERE seller = %s
-            ORDER BY name
+            ORDER BY buyer_name
         """, (seller,))
         buyers = [row[0] for row in cur.fetchall()]
         seller_summaries.append((seller, count, buyers))
