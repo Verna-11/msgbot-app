@@ -44,7 +44,7 @@ def init_pg():
             payment TEXT,
             price NUMERIC,
             quantity INTEGER,
-            unit_price NUMERIC
+            unit_price NUMERIC,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 
 
