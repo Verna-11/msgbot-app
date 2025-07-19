@@ -281,10 +281,10 @@ def sellers_summary():
     seller_summaries = []
     for seller, count in sellers_data:
         cur.execute("""
-            SELECT DISTINCT buyer_name
+            SELECT DISTINCT name
             FROM orders
             WHERE seller = %s
-            ORDER BY buyer_name
+            ORDER BY name
         """, (seller,))
         buyers = [row[0] for row in cur.fetchall()]
         seller_summaries.append((seller, count, buyers))
