@@ -146,7 +146,7 @@ def handle_user_message(user_id, msg):
         state = {
         "step": "awaiting_address",
         "order": {
-            "buyer_name": full_name,
+            "name": full_name,
             "seller": seller_tag,
             "product": product,
             "unit_price": unit_price,
