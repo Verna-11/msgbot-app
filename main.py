@@ -196,7 +196,7 @@ def save_order(user_id, order):
         order["seller"], #row1
         order["product"],#row2
         order["price"],#row3
-        order["name"],#row4
+        order["buyer_name"],#row4
         order["address"],#row5
         order["phone"],#row6
         order["payment"],#row7
