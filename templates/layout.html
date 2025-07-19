@@ -2,15 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{% block title %}Bot and Web App{% endblock %}</title>
+    <title>{% block title %}My Orders App{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <header>
-        <h1>Order Dashboard</h1>
+        <h1>🛒 Order Dashboard</h1>
         <nav>
-            <a href="/">Dashboard</a> |
-            <a href="/buyers">Buyers</a> |
+            <a href="/">Dashboard</a>
+            <a href="/buyers">Buyers</a>
             <a href="/sellers">Sellers</a>
         </nav>
         <hr>
@@ -22,7 +23,7 @@
 
     <footer>
         <hr>
-        <p>&copy; {{ current_year }} My Live Seller App</p>
+        <p>&copy; {{ current_year or 2025 }} My Live Seller App</p>
     </footer>
 </body>
 </html>
