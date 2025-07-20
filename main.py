@@ -72,7 +72,7 @@ def webhook():
         for msg_event in entry.get("messaging", []):
             sender_id = msg_event["sender"]["id"]
             if "message" in msg_event and "text" in msg_event["message"]:
-                user_message = msg_event["message"]["text"].title()
+                user_message = msg_event["message"]["text"].strip()
                 response = handle_user_message(sender_id, user_message)
                 send_message(sender_id, response)
     return "ok", 200
@@ -102,7 +102,7 @@ def handle_user_message(user_id, msg):
         if len(parts) != 2 or not parts[1].strip():
             return "❌ Please provide a valid order key. Example: cancel abcd1234"
 
-        key = parts[1].strip()
+        key = parts[1].strip().lower()
         conn = get_pg_connection()
         cur = conn.cursor()
 
