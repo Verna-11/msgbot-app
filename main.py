@@ -47,7 +47,7 @@ def init_pg():
             quantity INTEGER,
             unit_price NUMERIC,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            order_key TEXT UNIQUE,
+            order_key TEXT UNIQUE
 
 
         )
