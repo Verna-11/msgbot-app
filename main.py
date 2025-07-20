@@ -95,7 +95,7 @@ def get_user_full_name(psid, page_access_token):
 
 
 def handle_user_message(user_id, msg):
-    if msg.lower().startswith("cancel") or if msg.lower().startwith("c"):
+    if msg.lower().startswith("cancel") or msg.lower().startwith("c"):
         key = msg.split(" ",1)[1].strip()
         conn = get_pg_connection()
         cur = conn.cursor()
