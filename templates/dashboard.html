@@ -4,9 +4,10 @@
 {% block content %}
 <body>
   <h1>Live Dashboard</h1>
+  <br/>
   <form method="get">
     <label>Filter by seller tag:</label>
-    <input name="seller" placeholder="e.g. Jane123" value="{{ seller or '' }}">
+    <input name="seller" placeholder="e.g. sophialive123" value="{{ seller or '' }}">
     <button type="submit">Search</button>
     <a href="/">Reset</a>
   </form>
@@ -24,7 +25,7 @@
     {% for row in orders %}
     <tr>
       <td>{{ row[0] }}</td>
-      <td>{{ row[2] }}</td>
+      <td>#{{ row[2] }}</td>
       <td>{{ row[3] }}</td>
       <td>{{ row[4]}}</td>
       <td>{{ row[5] }}</td>
