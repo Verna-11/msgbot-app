@@ -97,12 +97,14 @@ def handle_user_message(user_id, msg):
         if not match:
             user_states.pop(user_id, None)  # clear any existing state
             return (
-            "⚠️ Sorry, hindi ko po naintindihan\n"
-            "Please lagyan po natin ng \n"
-            "hashtag si #seller example:\n"
-            "#Sophialive Lip Gloss\n\n"
-            "Subukan po uli"
-        )
+            "sorry hindi ko po naintindihan \n"
+            "ito po example ng pag order\n"
+            "e:g #sophialive red bag 100\n"
+            "e:g #sophialive bag\n"
+            "e:g bag red 100 2x #sophialive\n"
+            "e:g red bag 3x55 #sophialive\n"
+            "e:g x2 ₱100 or x2 100 yellow shirt #sophialive"
+            )
 
         seller_tag = match.group(1)
         product_text = re.sub(r'#\w+', '', msg).strip()

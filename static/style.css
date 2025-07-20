@@ -20,6 +20,8 @@ header {
 
 nav {
     margin-top: 10px;
+    text-align: center;
+    text: bold;
 }
 
 nav a {
@@ -59,7 +61,7 @@ table {
 
 th, td {
     padding: 12px 15px;
-    border-bottom: 1px solid black;
+    border: 1px solid black;
     text-align: left;
 }
 
