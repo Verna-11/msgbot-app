@@ -3,26 +3,27 @@
 
 {% block content %}
 <body>
-    <h2 style="text-align:center;">Buyers Summary{% if seller %} for #{{ seller }}{% endif %}</h2>
-    <table>
-      <tr>
-        <th>Buyer Name</th>
-        <th>Total Orders</th>
-        <th>Total Spent (₱)</th>
-    </tr>
-    {% for name, total_orders, total_spent in summary %}
+<table>
+  <thead>
     <tr>
-        <td>{{ name }}</td>
-        <td>{{ total_orders }}</td>
-        <td>₱{{ '{:.2f}'.format(total_spent or 0) }}</td>
+      <th>Buyer</th>
+      <th>Sellers Bought From</th>
+      <th>Total Orders</th>
+      <th>Total Spent</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for name, seller_count, total_orders, total_spent in summary %}
+    <tr>
+      <td>{{ name }}</td>
+      <td>{{ seller_count }}</td>
+      <td>{{ total_orders }}</td>
+      <td>₱{{ "%.2f"|format(total_spent) }}</td>
     </tr>
     {% endfor %}
+  </tbody>
 </table>
 
-
-<div class="back-link">
-    <a href="/">← Back to Dashboard</a>
-</div>
 </body>
 {% endblock %}
 </html>

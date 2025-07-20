@@ -252,20 +252,28 @@ def dashboard():
     return render_template("dashboard.html", orders=orders, seller=seller)
 
 #buyers view
-app.route('/buyers')
+@app.route('/buyers')
 def buyers_summary():
     conn = get_pg_connection()
     cur = conn.cursor()
+
     cur.execute('''
-        SELECT name, COUNT(DISTINCT seller) AS from_seller, SUM(price) AS total_spent
+        SELECT 
+            name, 
+            COUNT(DISTINCT seller) AS seller_count, 
+            COUNT(*) AS total_orders,
+            SUM(price) AS total_spent
         FROM orders
         GROUP BY name
         ORDER BY total_spent DESC
     ''')
+
     summary = cur.fetchall()
     cur.close()
     conn.close()
+
     return render_template("buyers.html", summary=summary)
+
 
 # Sellers View
 @app.route('/sellers')
