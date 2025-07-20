@@ -21,6 +21,7 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 def get_pg_connection():
     return psycopg2.connect(DATABASE_URL, sslmode="require")
 
+#scheduler deletion of old order in database
 def delete_old_orders():
     conn = get_pg_connection()
     cur = conn.cursor()
@@ -125,13 +126,11 @@ def handle_user_message(user_id, msg):
         if not match:
             user_states.pop(user_id, None)  # clear any existing state
             return (
-            "sorry hindi ko po naintindihan \n"
-            "ito po example ng pag order\n"
-            "e:g #sophialive red bag 100\n"
-            "e:g #sophialive bag\n"
-            "e:g bag red 100 2x #sophialive\n"
-            "e:g red bag 3x55 #sophialive\n"
-            "e:g x2 ₱100 or x2 100 yellow shirt #sophialive"
+            "sorry hindi ko po naintindihan\n"
+            "order example: #sophialive22 red bag 100 x2\n"
+            "order example: #red bag ₱100 2x #sophialive22\n"
+            "cancel example: cancel abcd1234\n"
+            "cancel example: cancel 1234abcd"
             )
 
         seller_tag = match.group(1)
