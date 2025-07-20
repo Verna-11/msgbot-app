@@ -99,42 +99,42 @@ def get_user_full_name(psid, page_access_token):
 def handle_user_message(user_id, msg):
     if msg.lower().startswith("edit"):
         parts = msg.split(" ", 1)
-    if len(parts) != 2 or not parts[1].strip():
-        return "❌ Please provide a valid order key to edit. Example: edit abcd1234"
+        if len(parts) != 2 or not parts[1].strip():
+            return "❌ Please provide a valid order key to edit. Example: edit abcd1234"
+    
+        key = parts[1].strip()
+        conn = get_pg_connection()
+        cur = conn.cursor()
+    
+        cur.execute("SELECT product, quantity, unit_price, address, phone, payment FROM orders WHERE order_key = %s AND user_id = %s", (key, user_id))
+        order = cur.fetchone()
 
-    key = parts[1].strip()
-    conn = get_pg_connection()
-    cur = conn.cursor()
-
-    cur.execute("SELECT product, quantity, unit_price, address, phone, payment FROM orders WHERE order_key = %s AND user_id = %s", (key, user_id))
-    order = cur.fetchone()
-
-    if order:
-        product, quantity, unit_price, address, phone, payment = order
-        user_states[user_id] = {
-            "step": "edit_address",
-            "edit_key": key,
-            "order": {
-                "product": product,
-                "quantity": quantity,
-                "unit_price": float(unit_price),
-                "price": float(unit_price) * int(quantity),
-                "address": address,
-                "phone": phone,
-                "payment": payment
+        if order:
+            product, quantity, unit_price, address, phone, payment = order
+            user_states[user_id] = {
+                "step": "edit_address",
+                "edit_key": key,
+                "order": {
+                    "product": product,
+                    "quantity": quantity,
+                    "unit_price": float(unit_price),
+                    "price": float(unit_price) * int(quantity),
+                    "address": address,
+                    "phone": phone,
+                    "payment": payment
+                }
             }
-        }
-        cur.close()
-        conn.close()
-        return (
-            f"📝 Editing order `{key}` for '{product}'.\n"
-            f"Current address: {address}\n\n"
-            "✏️ Please send the new address:"
-        )
-    else:
-        cur.close()
-        conn.close()
-        return f"⚠️ No order found with key `{key}` that belongs to you."
+            cur.close()
+            conn.close()
+            return (
+                f"📝 Editing order `{key}` for '{product}'.\n"
+                f"Current address: {address}\n\n"
+                "✏️ Please send the new address:"
+            )
+        else:
+            cur.close()
+            conn.close()
+            return f"⚠️ No order found with key `{key}` that belongs to you."
 
     if msg.lower().startswith("cancel"):
         parts = msg.split(" ", 1)
