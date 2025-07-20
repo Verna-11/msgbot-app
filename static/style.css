@@ -54,17 +54,22 @@ table {
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    border: 2px solid black;
 }
 
 th, td {
     padding: 12px 15px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid black;
     text-align: left;
 }
 
 th {
     background-color: #fc8de8;
     color: white;
+}
+
+footer {
+    text-align: center; 
 }
 
 /* Responsive layout */
