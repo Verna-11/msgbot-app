@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from flask import Flask, request, render_template
 import requests, re
 import os
+import uuid
 import psycopg2
 from urllib.parse import urlparse
 
@@ -90,7 +91,23 @@ def get_user_full_name(psid, page_access_token):
         print("Error fetching user name:", e)
     return None
 
+
+
+
 def handle_user_message(user_id, msg):
+    if msg.lower().startswith("cancel") or if msg.lower().startwith("c"):
+        key = msg.split(" ",1)[1].strip()
+        conn = get_pg_connection()
+        cur = conn.cursor()
+        cur.execute("DELETE FROM orders WHERE order_key = %s AND user_id = %s RETURNING *", (key, user_id))
+        deleted = cur.fetchone()
+        conn.commit()
+        cur.close()
+        conn.close()
+        if deleted:
+            return f"Your order with key {key} has been canceled."
+        else:
+            return f"Hindi po kayo nag mamayari nito {key}."
     state = user_states.get(user_id, {})
     if 'step' not in state:
         match = re.search(r'#([A-Za-z0-9_]+)', msg)
@@ -184,29 +201,35 @@ def handle_user_message(user_id, msg):
     elif state["step"] == "awaiting_payment":
         state["order"]["payment"] = msg
         order = state["order"]
-        save_order(user_id, order)
+        order_key = save_order(user_id, order)
         user_states.pop(user_id)
         return (
             f"✅ Order confirmed!\n\n"
             f"📦 Product: {order['product']}\n"
             f"    Quantity {order['quantity']} X ₱{order['unit_price']:.2f} \n"
-            f"💰 Total: ₱    {order['price']:.2f}\n"
+            f"💰 Total: ₱{order['price']:.2f}\n"
             f"👤 Name: {order['name']}\n"
             f"📍 Address: {order['address']}\n"
             f"📞 Phone: {order['phone']}\n"
             f"💰 Payment: {order['payment']}\n\n"
-            f"Thank you! you'll be in touch with the seller soon. 😊"
+            f"    Cancelation: Kung gusto po i cancel send >> cancel {order_key}"
         )
     else:
         user_states.pop(user_id, None)
         return "Oops, something went wrong. Let's start over. Please send your order again."
 
+
+def generate_order_key():
+    return str(uuid.uuid4())[:8]  # short, user-friendly ID (8 chars)
+
+
 def save_order(user_id, order):
+    order_key = generate_order_key()
     conn = get_pg_connection()
     cur = conn.cursor()
     cur.execute('''
-        INSERT INTO orders (user_id, seller, product, price, name, address, phone, payment,quantity,unit_price)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO orders (user_id, seller, product, price, name, address, phone, payment,quantity,unit_price, order_key)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s %s)
     ''', (
         user_id,
         order["seller"], 
@@ -217,7 +240,8 @@ def save_order(user_id, order):
         order["phone"],
         order["payment"],
         order["quantity"],
-        order["unit_price"]
+        order["unit_price"],
+        order_key
     ))
     conn.commit()
     cur.close()
