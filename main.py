@@ -97,6 +97,45 @@ def get_user_full_name(psid, page_access_token):
 
 
 def handle_user_message(user_id, msg):
+    if msg.lower().startswith("edit"):
+        parts = msg.split(" ", 1)
+    if len(parts) != 2 or not parts[1].strip():
+        return "❌ Please provide a valid order key to edit. Example: edit abcd1234"
+
+    key = parts[1].strip()
+    conn = get_pg_connection()
+    cur = conn.cursor()
+
+    cur.execute("SELECT product, quantity, unit_price, address, phone, payment FROM orders WHERE order_key = %s AND user_id = %s", (key, user_id))
+    order = cur.fetchone()
+
+    if order:
+        product, quantity, unit_price, address, phone, payment = order
+        user_states[user_id] = {
+            "step": "edit_address",
+            "edit_key": key,
+            "order": {
+                "product": product,
+                "quantity": quantity,
+                "unit_price": float(unit_price),
+                "price": float(unit_price) * int(quantity),
+                "address": address,
+                "phone": phone,
+                "payment": payment
+            }
+        }
+        cur.close()
+        conn.close()
+        return (
+            f"📝 Editing order `{key}` for '{product}'.\n"
+            f"Current address: {address}\n\n"
+            "✏️ Please send the new address:"
+        )
+    else:
+        cur.close()
+        conn.close()
+        return f"⚠️ No order found with key `{key}` that belongs to you."
+
     if msg.lower().startswith("cancel"):
         parts = msg.split(" ", 1)
         if len(parts) != 2 or not parts[1].strip():
@@ -199,6 +238,48 @@ def handle_user_message(user_id, msg):
         }
         user_states[user_id] = state
         return f"Thanks for your order for '{product}' from seller #{seller_tag}.\nMay I have your address?"
+
+    elif state["step"] == "edit_address":
+        state["order"]["address"] = msg
+        state["step"] = "edit_phone"
+        return "📞 Got it. What's the new phone number?"
+
+    elif state["step"] == "edit_phone":
+        state["order"]["phone"] = msg
+        state["step"] = "edit_payment"
+        return "💳 Noted. What's the new payment method?"
+
+    elif state["step"] == "edit_payment":
+        state["order"]["payment"] = msg
+        order = state["order"]
+        order_key = state["edit_key"]
+
+        conn = get_pg_connection()
+        cur = conn.cursor()
+        cur.execute('''
+            UPDATE orders
+            SET address = %s,
+                phone = %s,
+                payment = %s
+            WHERE order_key = %s AND user_id = %s
+        ''', (
+            order["address"],
+            order["phone"],
+            order["payment"],
+            order_key,
+            user_id
+        ))
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        user_states.pop(user_id)
+        return (
+            f"✅ Order `{order_key}` updated successfully!\n"
+            f"📍 New Address: {order['address']}\n"
+            f"📞 Phone: {order['phone']}\n"
+            f"💰 Payment: {order['payment']}"
+        )
 
     elif state["step"] == "awaiting_address":
         state["order"]["address"] = msg
