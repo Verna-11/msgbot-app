@@ -5,22 +5,24 @@
     <title>{% block title %}My Orders App{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
 </head>
 <body>
     <header>
         <h1>Order Dashboard</h1>
-        <nav class="navbar bg-body-tertiary">
-  <form class="container-fluid justify-content-start">
-    <button class="btn btn-outline-success me-2" type="button"><a href='/'>Dashboard</a></button>
-    <button class="btn btn-outline-success me-2" type="button">Smaller button</button>
-  </form>
-</nav>
+        <nav>
+            <a href="/">Dashboard</a>
+            <a href="/buyers">Buyers</a>
+            <a href="/sellers">Sellers</a>
+        </nav>
         <hr>
     </header>
 
     <main>
         {% block content %}{% endblock %}
     </main>
+
+    
 </body>
 <footer>
         <hr>

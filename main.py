@@ -97,18 +97,28 @@ def get_user_full_name(psid, page_access_token):
 
 def handle_user_message(user_id, msg):
     if msg.lower().startswith("cancel"):
-        key = msg.split(" ",1)[1].strip()
+        parts = msg.split(" ", 1)
+        if len(parts) != 2 or not parts[1].strip():
+            return "❌ Please provide a valid order key. Example: cancel abcd1234"
+
+        key = parts[1].strip()
         conn = get_pg_connection()
         cur = conn.cursor()
-        cur.execute("DELETE FROM orders WHERE order_key = %s AND user_id = %s RETURNING *", (key, user_id))
-        deleted = cur.fetchone()
-        conn.commit()
+
+        # Double check if the order exists and belongs to user
+        cur.execute("SELECT id FROM orders WHERE order_key = %s AND user_id = %s", (key, user_id))
+        order = cur.fetchone()
+
+        if order:
+            cur.execute("DELETE FROM orders WHERE id = %s", (order[0],))
+            conn.commit()
+            result = f"✅ Your order with key `{key}` has been canceled."
+        else:
+            result = f"⚠️ Order key `{key}` was not found or does not belong to you."
+
         cur.close()
         conn.close()
-        if deleted:
-            return f"Your order with key {key} has been canceled."
-        else:
-            return f"Hindi po kayo nag mamayari nito {key}."
+        return result
     state = user_states.get(user_id, {})
     if 'step' not in state:
         match = re.search(r'#([A-Za-z0-9_]+)', msg)
@@ -206,7 +216,7 @@ def handle_user_message(user_id, msg):
         user_states.pop(user_id)
         return (
             f"✅ Order confirmed!\n\n"
-            f"    Order Key: {order_key}"
+            f"    Order Key: {order_key}\n"
             f"📦 Product: {order['product']}\n"
             f"    Quantity {order['quantity']} X ₱{order['unit_price']:.2f} \n"
             f"💰 Total: ₱{order['price']:.2f}\n"
