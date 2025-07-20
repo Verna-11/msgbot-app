@@ -46,7 +46,8 @@ def init_pg():
             price NUMERIC,
             quantity INTEGER,
             unit_price NUMERIC,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            order_key TEXT UNIQUE,
 
 
         )
@@ -230,7 +231,7 @@ def save_order(user_id, order):
     cur = conn.cursor()
     cur.execute('''
         INSERT INTO orders (user_id, seller, product, price, name, address, phone, payment,quantity,unit_price, order_key)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     ''', (
         user_id,
         order["seller"], 
