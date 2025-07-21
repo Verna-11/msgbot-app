@@ -33,12 +33,12 @@
           {% for order in orders %}
           <tr class="hover:bg-gray-50">
             <td class="px-4 py-2">{{ order[2] }}</td>
-            <td class="px-4 py-2">{{ order.[4] }}</td>
-            <td class="px-4 py-2">{{ order.[5] }}</td>
-            <td class="px-4 py-2">{{ order.[6] }}</td>
-            <td class="px-4 py-2">{{ order.[8] }}</td>
-            <td class="px-4 py-2">₱{{ '%.2f'|format(order.[3]) }}</td>
-            <td class="px-4 py-2">{{ order.[11].strftime('%Y-%m-%d %H:%M') }}</td>
+            <td class="px-4 py-2">{{ order[4] }}</td>
+            <td class="px-4 py-2">{{ order[5] }}</td>
+            <td class="px-4 py-2">{{ order[6] }}</td>
+            <td class="px-4 py-2">{{ order[8] }}</td>
+            <td class="px-4 py-2">₱{{ '%.2f'|format(order[3]) }}</td>
+            <td class="px-4 py-2">{{ order[11].strftime('%Y-%m-%d %H:%M') }}</td>
           </tr>
           {% endfor %}
         </tbody>
