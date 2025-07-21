@@ -41,11 +41,7 @@
             <td class="px-4 py-2">₱{{ '%.2f' | format(order[10]|float) }}</td>  <!-- unit_price -->
             <td class="px-4 py-2 font-semibold">₱{{ '%.2f' | format(order[8]|float) }}</td>  <!-- price -->
             <td class="px-4 py-2">{{ order[7] }}</td>  <!-- payment -->
-            <td class="px-4 py-2">
-              <a href="https://facebook.com/{{ order[1] }}" target="_blank" class="text-blue-600 hover:underline">
-                {{ order[4] }} <!-- Buyer's name -->
-              </a>
-            </td>
+            <td class="px-4 py-2">{{ order[4] }} <!-- Buyer's name ---></td>
             <td class="px-4 py-2">{{ order[5] }}</td>  <!-- address -->
             <td class="px-4 py-2">{{ order[6] }}</td>  <!-- phone -->
             <td class="px-4 py-2 text-sm text-gray-600">{{ order[11].strftime('%Y-%B-%d %H:%M') if order[11] is not string else order[11] }}</td>
