@@ -53,13 +53,11 @@ a {
 
 .SearchBar {
      position: absolute;
-     top: 355px;
-     left: 575px;
 }
 
 .SearchBar input {
-     height: 50px;
-     width: 50px;
+     height: 40px;
+     width: 120px;
 }
 /* Header */
 h1 {
