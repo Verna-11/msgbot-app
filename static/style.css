@@ -41,8 +41,8 @@ nav a:hover {
     color: white;
     border-radius: 8px;
     dispaly: inline-block;
-    padding-left: 5%;
-    padding-right: 5%;
+    padding-left: 1%;
+    padding-right: 1%;
 }   
 
 a {
@@ -59,10 +59,10 @@ a {
 h1 {
     background-color: #fc8de8;
     display: inline-block;
-    border-radius: 8px;
+    border-radius: 12px;
     color: white;
-    padding-left: 10%;
-    padding-right: 10%;
+    padding-left: 1%;
+    padding-right: 1%;
 }   
 
 h2 {
