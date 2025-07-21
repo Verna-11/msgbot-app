@@ -390,7 +390,7 @@ def handle_user_message(user_id, msg):
             f"💳 Payment: {order['payment']}"
         )
 
-    elif step == "ask_name":
+    elif state["step"] == "ask_name":
         name = msg.strip()
         if not is_full_name(name):
             return "❌ Please enter your **full name** (e.g., Maria Clara Reyes)."
