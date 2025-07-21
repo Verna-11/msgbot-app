@@ -227,10 +227,10 @@ def handle_user_message(user_id, msg):
             user_states.pop(user_id, None)  # clear any existing state
             return (
             "sorry hindi ko po naintindihan\n"
-            "order example: #sophialive22 red bag 100 x2\n"
-            "order example: #red bag ₱100 2x #sophialive22\n"
-            "cancel example: cancel abcd1234\n"
-            "cancel example: cancel 1234abcd"
+            "order example: #mynamestore red bag 100 x2\n"
+            "order example: red bag ₱100 2x #mynamestore\n"
+            "edit example: edit a1b2c3d4\n"
+            
             )
 
         seller_tag = match.group(1)
@@ -432,7 +432,7 @@ def save_order(user_id, order):
         order["quantity"],
         order["unit_price"],
         order_key,
-        order["created_at"]
+        created_at,
     ))
     conn.commit()
     cur.close()
