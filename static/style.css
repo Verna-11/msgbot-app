@@ -37,9 +37,13 @@ nav a {
 nav a:hover {
     text-decoration: underline;
     text: bold;
-    background-color: blue;
+    background-color: #fc8de8;
     color: white;
-}
+    border-radius: 8px;
+    dispaly: inline-block;
+    padding-left: 5%;
+    padding-right: 5%;
+}   
 
 a {
     text: bold;
@@ -49,9 +53,11 @@ a {
 h1 {
     background-color: #fc8de8;
     display: inline-block;
-    border-radius: 5px;
+    border-radius: 8px;
     color: white;
-}
+    padding-left: 10%;
+    padding-right: 10%;
+}   
 
 h2 {
     color: #fc8de8;
@@ -68,12 +74,12 @@ table {
     border-radius: 8px;
     overflow: hidden;
     box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-    border: 2px solid black;
+    border: 1px solid black;
 }
 
 th, td {
     padding: 12px 15px;
-    border: 2px solid black;
+    border: 1px solid black;
     text-align: left;
 }
 
