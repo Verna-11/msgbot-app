@@ -284,8 +284,10 @@ def handle_user_message(user_id, msg):
         # ✅ Get full name from Facebook API
         full_name = get_user_full_name(user_id, PAGE_ACCESS_TOKEN)
         if not full_name:
-            full_name = "Unknown"
-        
+            user_states[user_id] = {"step": "ask_name"}
+            return "👋 Hi there! I didn’t get your full name. What’s your complete name?"
+
+
         state = {
         "step": "awaiting_address",
         "order": {
@@ -376,7 +378,12 @@ def handle_user_message(user_id, msg):
             f"📞 Phone: {order['phone']}\n"
             f"💳 Payment: {order['payment']}"
         )
-
+        
+    elif state["step"] == "ask_name":
+        name = msg.strip()
+        state["name"] = name
+        state["step"] = "awaiting_address"  # continue your flow, like "ask_address"
+        return "📍 Thanks! Now please enter your address:"
     elif state["step"] == "awaiting_address":
         state["order"]["address"] = msg
         state["step"] = "awaiting_phone"
