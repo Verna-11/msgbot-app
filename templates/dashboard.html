@@ -7,7 +7,7 @@
 <body class="bg-gray-100 min-h-screen px-6 py-10">
   <div class="max-w-7xl mx-auto">
     <div class="mb-6 flex justify-between items-center">
-      <h1 class="text-2xl font-bold">Welcome, {{ seller }}</h1>
+      <h1 class="text-2xl font-bold">Welcome  {{ seller }}</h1>
       <a href="/logout" class="text-red-500 hover:underline">Logout</a>
     </div>
 
@@ -39,7 +39,7 @@
             <td class="px-4 py-2">{{ order.product }}</td>
             <td class="px-4 py-2">{{ order.quantity }}</td>
             <td class="px-4 py-2">₱{{ '%.2f' | format(order[9]) }}</td>
-            <td class="px-4 py-2 font-semibold">₱{{ '%.2f' | format(order.price) }}</td>
+            <td class="px-4 py-2 font-semibold">₱{{ '%.2f' | format(order[3]) }}</td>
             <td class="px-4 py-2">{{ order.payment }}</td>
             <td class="px-4 py-2">{{ order.name }}</td>
             <td class="px-4 py-2">{{ order.address }}</td>
