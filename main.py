@@ -76,14 +76,6 @@ def logout():
 def get_pg_connection():
     return psycopg2.connect(DATABASE_URL, sslmode="require")
 
-def get_orders_for_seller(seller):
-    conn = get_pg_connection()
-    cur = conn.cursor(cursor_factory=RealDictCursor)  # 👈 This returns dicts
-    cur.execute("SELECT * FROM orders WHERE seller = %s ORDER BY created_at DESC", (seller,))
-    orders = cur.fetchall()
-    cur.close()
-    conn.close()
-    return orders
 #scheduler deletion of old order in database
 def delete_old_orders():
     conn = get_pg_connection()
@@ -473,61 +465,6 @@ def dashboard():
     conn.close()
 
     return render_template("dashboard.html", orders=orders, seller=seller)
-
-#buyers view
-@app.route('/buyers')
-def buyers_summary():
-    conn = get_pg_connection()
-    cur = conn.cursor()
-
-    cur.execute('''
-        SELECT 
-            name, 
-            COUNT(DISTINCT seller) AS seller_count, 
-            COUNT(*) AS total_orders,
-            SUM(price) AS total_spent
-        FROM orders
-        GROUP BY name
-        ORDER BY total_spent DESC
-    ''')
-
-    summary = cur.fetchall()
-    cur.close()
-    conn.close()
-
-    return render_template("buyers.html", summary=summary)
-
-
-# Sellers View
-@app.route('/sellers')
-def sellers_summary():
-    conn = get_pg_connection()
-    cur = conn.cursor()
-    
-    # First, get all sellers with order count
-    cur.execute("""
-        SELECT seller, COUNT(*) as order_count
-        FROM orders
-        GROUP BY seller
-        ORDER BY order_count DESC
-    """)
-    sellers_data = cur.fetchall()
-
-    # Then get unique buyers for each seller
-    seller_summaries = []
-    for seller, order_count in sellers_data:
-        cur.execute("""
-            SELECT DISTINCT name
-            FROM orders
-            WHERE seller = %s
-            ORDER BY name
-        """, (seller,))
-        buyers = [row[0] for row in cur.fetchall()]
-        seller_summaries.append((seller, order_count, buyers))
-
-    cur.close()
-    conn.close()
-    return render_template('sellers.html', sellers=seller_summaries)
 
 #delete data for 7 days scheduler
 from apscheduler.schedulers.background import BackgroundScheduler

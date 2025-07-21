@@ -38,8 +38,8 @@
             <td class="px-4 py-2 font-mono text-xs text-gray-500">{{ order.order_key }}</td>
             <td class="px-4 py-2">{{ order.product }}</td>
             <td class="px-4 py-2">{{ order.quantity }}</td>
-            <td class="px-4 py-2">₱{{ '%.2f' | format(order.unit_price) }}</td>
-            <td class="px-4 py-2 font-semibold">₱{{ '%.2f' | format(order.[9]) }}</td>
+            <td class="px-4 py-2">₱{{ '%.2f' | format(order[9]) }}</td>
+            <td class="px-4 py-2 font-semibold">₱{{ '%.2f' | format(order.price) }}</td>
             <td class="px-4 py-2">{{ order.payment }}</td>
             <td class="px-4 py-2">{{ order.name }}</td>
             <td class="px-4 py-2">{{ order.address }}</td>
