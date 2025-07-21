@@ -416,7 +416,7 @@ def save_order(user_id, order):
     conn = get_pg_connection()
     cur = conn.cursor()
     cur.execute('''
-        INSERT INTO orders (user_id, seller, product, price, name, address, phone, payment,quantity,unit_price, order_key)
+        INSERT INTO orders (user_id, seller, product, price, name, address, phone, payment,quantity,unit_price, order_key, created_at)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     ''', (
         user_id,
@@ -429,7 +429,8 @@ def save_order(user_id, order):
         order["payment"],
         order["quantity"],
         order["unit_price"],
-        order_key
+        order_key,
+        order["created_at"]
     ))
     conn.commit()
     cur.close()
@@ -452,16 +453,17 @@ def send_message(recipient_id, message_text):
 # 📊 Dashboard View
 @app.route('/')
 def dashboard():
-    seller = request.args.get("seller")
+    seller = session.get("seller")
+    if not seller:
+        return redirect(url_for('login'))
+
     conn = get_pg_connection()
     cur = conn.cursor()
-    if seller:
-        cur.execute("SELECT * FROM orders WHERE seller = %s ORDER BY id DESC", (seller,))
-    else:
-        cur.execute("SELECT * FROM orders ORDER BY id DESC")
+    cur.execute("SELECT * FROM orders WHERE seller = %s ORDER BY id DESC", (seller,))
     orders = cur.fetchall()
     cur.close()
     conn.close()
+
     return render_template("dashboard.html", orders=orders, seller=seller)
 
 #buyers view
