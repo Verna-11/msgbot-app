@@ -156,6 +156,8 @@ def get_user_full_name(psid, page_access_token):
 
 #checking capture name 
 def is_full_name(name):
+    if not name:
+        return False
     return len(name.strip().split()) >= 2
 
 def handle_user_message(user_id, msg):
