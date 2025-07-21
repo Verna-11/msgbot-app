@@ -378,10 +378,9 @@ def handle_user_message(user_id, msg):
             f"📞 Phone: {order['phone']}\n"
             f"💳 Payment: {order['payment']}"
         )
-        
+
     elif state["step"] == "ask_name":
-        name = msg.strip()
-        state["name"] = name
+        state["order"]["name"] = msg
         state["step"] = "awaiting_address"  # continue your flow, like "ask_address"
         return "📍 Thanks! Now please enter your address:"
     elif state["step"] == "awaiting_address":
