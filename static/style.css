@@ -40,9 +40,10 @@ nav a:hover {
 
 /* Header */
 h1 {
-    background-color: white;
+    background-color: #fc8de8;
     display: inline-block;
-    color: #fc8de8;
+    border-radius: ;
+    color: white;
 }
 
 h2 {

@@ -128,8 +128,8 @@ def handle_user_message(user_id, msg):
             conn.close()
             return (
                 f"📝 Editing order `{key}` for '{product}'.\n"
-                f"Current address: {address}\n\n"
-                "✏️ Please send the new address:"
+                f"Current product: {product}, Qty: {quantity}, Unit Price: ₱{unit_price:.2f}\n\n"
+                f"✏️ Please send the new **product name/description**:"
             )
         else:
             cur.close()
@@ -239,6 +239,29 @@ def handle_user_message(user_id, msg):
         user_states[user_id] = state
         return f"Thanks for your order for '{product}' from seller #{seller_tag}.\nMay I have your address?"
 
+    elif state["step"] == "edit_product":
+        state["order"]["product"] = msg
+        state["step"] = "edit_quantity"
+        return "🔢 New quantity?"
+
+    elif state["step"] == "edit_quantity":
+        try:
+            qty = int(msg)
+            state["order"]["quantity"] = qty
+            state["step"] = "edit_unit_price"
+            return "💸 New unit price?"
+        except ValueError:
+            return "❌ Please enter a valid number for quantity."
+
+    elif state["step"] == "edit_unit_price":
+        try:
+            price = float(msg)
+            state["order"]["unit_price"] = price
+            state["order"]["price"] = price * state["order"]["quantity"]
+            state["step"] = "edit_address"
+            return f"📍 New address?"
+        except ValueError:
+            return "❌ Please enter a valid price (e.g., 99.99)"
     elif state["step"] == "edit_address":
         state["order"]["address"] = msg
         state["step"] = "edit_phone"
@@ -258,11 +281,20 @@ def handle_user_message(user_id, msg):
         cur = conn.cursor()
         cur.execute('''
             UPDATE orders
-            SET address = %s,
+            SET
+                product = %s,
+                quantity = %s,
+                unit_price = %s,
+                price = %s, 
+                address = %s,
                 phone = %s,
                 payment = %s
             WHERE order_key = %s AND user_id = %s
         ''', (
+            order["product"],
+            order["quantity"],
+            order["unit_price"],
+            order["price"],
             order["address"],
             order["phone"],
             order["payment"],
@@ -276,9 +308,12 @@ def handle_user_message(user_id, msg):
         user_states.pop(user_id)
         return (
             f"✅ Order `{order_key}` updated successfully!\n"
-            f"📍 New Address: {order['address']}\n"
+            f"📦 Product: {order['product']}\n"
+            f"🔢 Quantity: {order['quantity']} x ₱{order['unit_price']:.2f}\n"
+            f"💰 Total: ₱{order['price']:.2f}\n"
+            f"📍 Address: {order['address']}\n"
             f"📞 Phone: {order['phone']}\n"
-            f"💰 Payment: {order['payment']}"
+            f"💳 Payment: {order['payment']}"
         )
 
     elif state["step"] == "awaiting_address":
