@@ -154,8 +154,9 @@ def get_user_full_name(psid, page_access_token):
         print("Error fetching user name:", e)
     return None
 
-
-
+#checking capture name 
+def is_full_name(name):
+    return len(name.strip().split()) >= 2
 
 def handle_user_message(user_id, msg):
     if msg.lower().startswith("edit"):
@@ -283,12 +284,24 @@ def handle_user_message(user_id, msg):
 
         # ✅ Get full name from Facebook API
         full_name = get_user_full_name(user_id, PAGE_ACCESS_TOKEN)
-        if not full_name:
-            user_states[user_id] = {"step": "ask_name"}
-            return "👋 Hi there! I didn’t get your full name. What’s your complete name?"
+        if not is_full_name(full_name):
 
 
-        state = {
+            user_states[user_id] = {
+
+        "step": "ask_name",
+        "order": {
+            "seller": seller_tag,
+            "product": product,
+            "unit_price": unit_price,a
+            "quantity": quantity,
+            "price": total_price
+        }
+        }
+        user_states[user_id] = state
+            return f"Thanks for your order for '{product}' from seller #{seller_tag}.\nMay I have your address?"
+        else:
+            user_states[user_id] = {
         "step": "awaiting_address",
         "order": {
             "name": full_name,
@@ -298,9 +311,8 @@ def handle_user_message(user_id, msg):
             "quantity": quantity,
             "price": total_price
         }
-        }
-        user_states[user_id] = state
-        return f"Thanks for your order for '{product}' from seller #{seller_tag}.\nMay I have your address?"
+    }
+            return "📍 Please enter your **delivery address**:"
 
     elif state["step"] == "edit_product":
         state["order"]["product"] = msg
@@ -379,10 +391,14 @@ def handle_user_message(user_id, msg):
             f"💳 Payment: {order['payment']}"
         )
 
-    elif state["step"] == "ask_name":
-        state["order"]["name"] = msg
-        state["step"] = "awaiting_address"  # continue your flow, like "ask_address"
-        return "📍 Thanks! Now please enter your address:"
+    elif step == "ask_name":
+        name = msg.strip()
+        if not is_full_name(name):
+            return "❌ Please enter your **full name** (e.g., Maria Clara Reyes)."
+        
+        state["order"]["name"] = name
+        state["step"] = "awaiting_address"
+        return "📍 Thank you! Now, please enter your **delivery address**:"
     elif state["step"] == "awaiting_address":
         state["order"]["address"] = msg
         state["step"] = "awaiting_phone"
@@ -420,7 +436,6 @@ def generate_order_key():
 
 def save_order(user_id, order):
     order_key = generate_order_key()
-    created_at = datetime.now().strftime("%H:%M:%S %B-%d-%Y")
     conn = get_pg_connection()
     cur = conn.cursor()
     cur.execute('''
