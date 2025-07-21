@@ -34,7 +34,7 @@
         </thead>
         <tbody class="divide-y divide-gray-100">
           {% for order in orders %}
-          <tr class="hover:bg-pink-50">
+          <tr class="hover:bg-pink-100 text-white">
             <td class="px-4 py-2 font-mono text-xs text-pink-500">{{ order[12] }}</td>  <!-- order_key -->
             <td class="px-4 py-2">{{ order[3] }}</td>  <!-- product -->
             <td class="px-4 py-2">{{ order[9] }}</td>  <!-- quantity -->
@@ -44,7 +44,7 @@
             <td class="px-4 py-2">{{ order[4] }}</td>  <!-- name -->
             <td class="px-4 py-2">{{ order[5] }}</td>  <!-- address -->
             <td class="px-4 py-2">{{ order[6] }}</td>  <!-- phone -->
-            <td class="px-4 py-2 text-sm text-gray-600">{{ order[11] }}</td>  <!-- created_at -->
+            <<td class="px-4 py-2 text-sm text-gray-600">{{ order[11].strftime('%Y-%B-%d %H:%M-%s') if order[11] is not string else order[11] }}</td>
           </tr>
           {% endfor %}
           
