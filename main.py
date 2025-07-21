@@ -79,7 +79,7 @@ def webhook():
 
 #get name in facebook
 def get_user_full_name(psid, page_access_token):
-    url = f"https://graph.facebook.com/v18.0/{psid}"
+    url = f"https://graph.facebook.com/v23.0/{psid}"
     params = {
         "fields": "first_name,last_name",
         "access_token": page_access_token

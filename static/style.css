@@ -51,10 +51,6 @@ a {
 
 /* search bar */
 
-.SearchBar {
-     position: absolute;
-}
-
 .SearchBar input {
      height: 40px;
      width: 120px;
