@@ -34,19 +34,20 @@
         </thead>
         <tbody class="divide-y divide-gray-100">
           {% for order in orders %}
-          <tr class="hover:bg-gray-50">
-            <td class="px-4 py-2 font-mono text-xs text-gray-500">{{ order.order_key }}</td>
-            <td class="px-4 py-2">{{ order.product }}</td>
-            <td class="px-4 py-2">{{ order.quantity }}</td>
-            <td class="px-4 py-2">₱{{ '%.2f' | format(order[9]) }}</td>
-            <td class="px-4 py-2 font-semibold">₱{{ '%.2f' | format(order[3]|float) }}</td>
-            <td class="px-4 py-2">{{ order.payment }}</td>
-            <td class="px-4 py-2">{{ order.name }}</td>
-            <td class="px-4 py-2">{{ order.address }}</td>
-            <td class="px-4 py-2">{{ order.phone }}</td>
-            <td class="px-4 py-2 text-sm text-gray-600">{{ order.created_at }}</td>
-          </tr>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-2 font-mono text-xs text-gray-500">{{ order[10] }}</td>  <!-- order_key -->
+              <td class="px-4 py-2">{{ order[2] }}</td>  <!-- product -->
+              <td class="px-4 py-2">{{ order[8] }}</td>  <!-- quantity -->
+              <td class="px-4 py-2">₱{{ '%.2f' | format(order[9]|float) }}</td>  <!-- unit_price -->
+              <td class="px-4 py-2 font-semibold">₱{{ '%.2f' | format(order[3]|float) }}</td>  <!-- price -->
+              <td class="px-4 py-2">{{ order[7] }}</td>  <!-- payment -->
+              <td class="px-4 py-2">{{ order[4] }}</td>  <!-- name -->
+              <td class="px-4 py-2">{{ order[5] }}</td>  <!-- address -->
+              <td class="px-4 py-2">{{ order[6] }}</td>  <!-- phone -->
+              <td class="px-4 py-2 text-sm text-gray-600">{{ order[11] }}</td>  <!-- created_at -->
+            </tr>
           {% endfor %}
+
         </tbody>
       </table>
     </div>
