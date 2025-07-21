@@ -285,34 +285,31 @@ def handle_user_message(user_id, msg):
         # ✅ Get full name from Facebook API
         full_name = get_user_full_name(user_id, PAGE_ACCESS_TOKEN)
         if not is_full_name(full_name):
-
-
             user_states[user_id] = {
-
-        "step": "ask_name",
-        "order": {
-            "seller": seller_tag,
-            "product": product,
-            "unit_price": unit_price,
-            "quantity": quantity,
-            "price": total_price
-        }
-        }
-        user_states[user_id] = state
-            return f"Thanks for your order for '{product}' from seller #{seller_tag}.\nMay I have your address?"
+                "step": "ask_name",
+                "order": {
+                    "seller": seller_tag,
+                    "product": product,
+                    "unit_price": unit_price,
+                    "quantity": quantity,
+                    "price": total_price
+                }
+            }
+            return f"Thanks for your order for '{product}' from seller #{seller_tag}.\nMay I have your full name?"
         else:
             user_states[user_id] = {
-        "step": "awaiting_address",
-        "order": {
-            "name": full_name,
-            "seller": seller_tag,
-            "product": product,
-            "unit_price": unit_price,
-            "quantity": quantity,
-            "price": total_price
-        }
-    }
-            return "📍 Please enter your **delivery address**:"
+                "step": "awaiting_address",
+                "order": {
+                    "name": full_name,
+                    "seller": seller_tag,
+                    "product": product,
+                    "unit_price": unit_price,
+                    "quantity": quantity,
+                    "price": total_price
+                }
+            }
+            return "📍 Please enter your delivery address:"
+
 
     elif state["step"] == "edit_product":
         state["order"]["product"] = msg
