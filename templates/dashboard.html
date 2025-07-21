@@ -1,41 +1,62 @@
-{% extends "layout.html" %}
-{% block content %}
-<body>
-  <h1>Live Dashboard</h1>
-  <br>
-  <br>
-  <div class="SearchBar">
-  <form method="get">
-    <label>Filter by seller tag:</label>
-    <input name="seller" placeholder="e.g. sophialive123" value="{{ seller or '' }}">
-    <button type="submit">Search</button>
-    <a href="/">Reset</a>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>{{ seller }}'s Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen px-6 py-10">
+  <div class="max-w-6xl mx-auto">
+    <div class="mb-6 flex justify-between items-center">
+      <h1 class="text-2xl font-bold">Welcome, {{ seller }}</h1>
+      <a href="/logout" class="text-red-500 hover:underline">Logout</a>
+    </div>
 
-  </form>
-</div>
-  <table>
-    <tr>
-      <th>ID:</th>
-      <th>Seller</th>
-      <th>Product Code</th>
-      <th>Name</th>
-      <th>Address</th>
-      <th>Phone</th>
-      <th>Payment</th>
+    <div class="mb-4">
+      <input type="text" id="searchInput" placeholder="Search by product or name..."
+             class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+    </div>
 
-    </tr>
-    {% for row in orders %}
-    <tr>
-      <td>{{ row[0] }}</td>
-      <td>#{{ row[2] }}</td>
-      <td>{{ row[3] }}</td>
-      <td>{{ row[4]}}</td>
-      <td>{{ row[5] }}</td>
-      <td>{{ row[6] }}</td>
-      <td>{{ row[7] }}</td>
-    </tr>
-    {% endfor %}
-  </table>
+    <div class="overflow-x-auto bg-white rounded-lg shadow">
+      <table class="min-w-full divide-y divide-gray-200" id="ordersTable">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-2 text-left text-sm font-semibold">Product</th>
+            <th class="px-4 py-2 text-left text-sm font-semibold">Name</th>
+            <th class="px-4 py-2 text-left text-sm font-semibold">Address</th>
+            <th class="px-4 py-2 text-left text-sm font-semibold">Phone</th>
+            <th class="px-4 py-2 text-left text-sm font-semibold">Qty</th>
+            <th class="px-4 py-2 text-left text-sm font-semibold">Price</th>
+            <th class="px-4 py-2 text-left text-sm font-semibold">Date</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for order in orders %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-4 py-2">{{ order.product }}</td>
+            <td class="px-4 py-2">{{ order.name }}</td>
+            <td class="px-4 py-2">{{ order.address }}</td>
+            <td class="px-4 py-2">{{ order.phone }}</td>
+            <td class="px-4 py-2">{{ order.quantity }}</td>
+            <td class="px-4 py-2">₱{{ '%.2f'|format(order.price) }}</td>
+            <td class="px-4 py-2">{{ order.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    // Simple client-side search filter
+    const input = document.getElementById("searchInput");
+    const table = document.getElementById("ordersTable").getElementsByTagName("tbody")[0];
+    input.addEventListener("keyup", function() {
+      const filter = input.value.toLowerCase();
+      for (const row of table.rows) {
+        const txt = row.innerText.toLowerCase();
+        row.style.display = txt.includes(filter) ? "" : "none";
+      }
+    });
+  </script>
 </body>
-{% endblock %}
 </html>

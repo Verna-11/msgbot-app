@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template,session, redirect, url_for, flash
+from werkzeug.security import generate_password_hash, check_password_hash
 import requests, re
 import os
 import uuid
@@ -16,6 +17,59 @@ user_states = {}
 
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
+
+app.secret_key = os.environ.get("SECRET_KEY", "secretnoclue")
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        seller = request.form['seller']
+        password = generate_password_hash(request.form['password'])
+
+        conn = get_pg_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute("INSERT INTO sellers (seller, password) VALUES (%s, %s)", (seller, password))
+            conn.commit()
+            flash("Registration successful. Please log in.", "success")
+            return redirect(url_for('login'))
+        except psycopg2.errors.UniqueViolation:
+            conn.rollback()
+            flash("Seller already exists.", "danger")
+        finally:
+            cur.close()
+            conn.close()
+    return render_template('register.html')
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        seller = request.form['seller']
+        password = request.form['password']
+
+        conn = get_pg_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT password FROM sellers WHERE seller = %s", (seller,))
+        result = cur.fetchone()
+        cur.close()
+        conn.close()
+
+        if result and check_password_hash(result[0], password):
+            session['seller'] = seller
+            flash("Login successful.", "success")
+            return redirect(url_for('dashboard'))
+        else:
+            flash("Invalid credentials.", "danger")
+    return render_template('login.html')
+
+
+@app.route('/logout')
+def logout():
+    session.pop('seller', None)
+    flash("Logged out.", "info")
+    return redirect(url_for('login'))
+
 
 #connecting to postgres
 def get_pg_connection():
@@ -51,6 +105,12 @@ def init_pg():
             order_key TEXT UNIQUE
 
 
+        )
+    ''')
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS sellers (
+            seller TEXT PRIMARY KEY,
+            password TEXT
         )
     ''')
     conn.commit()
