@@ -39,7 +39,7 @@
             <td class="px-4 py-2">{{ order.product }}</td>
             <td class="px-4 py-2">{{ order.quantity }}</td>
             <td class="px-4 py-2">₱{{ '%.2f' | format(order[9]) }}</td>
-            <td class="px-4 py-2 font-semibold">₱{{ '%.2f' | format(order[3]) }}</td>
+            <td class="px-4 py-2 font-semibold">₱{{ '%.2f' | format(order[3]|float) }}</td>
             <td class="px-4 py-2">{{ order.payment }}</td>
             <td class="px-4 py-2">{{ order.name }}</td>
             <td class="px-4 py-2">{{ order.address }}</td>
