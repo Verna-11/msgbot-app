@@ -7,8 +7,8 @@
 <body class="bg-gray-100 min-h-screen px-6 py-10">
   <div class="max-w-7xl mx-auto">
     <div class="mb-6 flex justify-between items-center">
-      <h1 class="text-2xl font-bold text-pink-600 dark:text-sky-400 rounded-lg bg-pink shadow hover:bg-pink-500 text-">Welcome  {{ seller }}</h1>
-      <a href="/logout" class="text-red-500 hover:underline">Logout</a>
+      <h1 class="text-2xl font-bold text-pink-600 dark:text-sky-250 rounded-lg bg-pink shadow">Welcome  {{ seller }}</h1>
+      <a href="/logout" class="text-white-500 hover:rounded-lg hover:bg-pink-500 hover:text-[#ffffff]">Logout</a>
     </div>
 
     <div class="mb-4">
@@ -42,7 +42,7 @@
             <td class="px-4 py-2 font-semibold">₱{{ '%.2f' | format(order[8]|float) }}</td>  <!-- price -->
             <td class="px-4 py-2">{{ order[7] }}</td>  <!-- payment -->
             <td class="px-4 py-2">
-              <a href="https://facebook.com/{{ order[1] }}" target="_blank" class="text-blue-600 hover:underline">
+              <a href="https://facebook.com/{{ order[0] }}" target="_blank" class="text-blue-600 hover:underline">
                 {{ order[4] }} <!-- Buyer's name -->
               </a>
             </td>
