@@ -5,6 +5,7 @@ import requests, re
 import os
 import uuid
 import psycopg2
+from psycopg2.extras import RealDictCursor
 from urllib.parse import urlparse
 
 
@@ -75,6 +76,14 @@ def logout():
 def get_pg_connection():
     return psycopg2.connect(DATABASE_URL, sslmode="require")
 
+def get_orders_for_seller(seller):
+    conn = get_pg_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)  # 👈 This returns dicts
+    cur.execute("SELECT * FROM orders WHERE seller = %s ORDER BY created_at DESC", (seller,))
+    orders = cur.fetchall()
+    cur.close()
+    conn.close()
+    return orders
 #scheduler deletion of old order in database
 def delete_old_orders():
     conn = get_pg_connection()
