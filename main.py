@@ -112,7 +112,7 @@ def handle_user_message(user_id, msg):
         if order:
             product, quantity, unit_price, address, phone, payment = order
             user_states[user_id] = {
-                "step": "edit_address",
+                "step": "edit_product",
                 "edit_key": key,
                 "order": {
                     "product": product,
