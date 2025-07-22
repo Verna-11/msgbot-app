@@ -165,7 +165,7 @@ def is_full_name(name):
     return len(name.strip().split()) >= 2
 
 def handle_user_message(user_id, msg):
-    if msg.lower().startswith("invoice")
+    if msg.lower().startswith("invoice"):
         orders = get_orders_by_sender(user_id)
         invoice_message = generate_invoice_for_sender(user_id, orders)
         send_message(user_id, invoice_message)
