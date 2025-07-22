@@ -165,7 +165,7 @@ def is_full_name(name):
     return len(name.strip().split()) >= 2
 
 def handle_user_message(user_id, msg):
-    if msg.strip().lower() == "invoice":
+    if msg.lower().startswith("invoice")
         orders = get_orders_by_sender(user_id)
         invoice_message = generate_invoice_for_sender(user_id, orders)
         send_message(user_id, invoice_message)
@@ -482,7 +482,7 @@ def send_message(recipient_id, message_text):
         print("Failed to send message:", res.text)
 
 #invoice
-def generate_invoice_for_sender(sender_id, orders):
+def generate_invoice_for_sender(user_id, orders):
     if not orders:
         return "❌ Wala pong nakitang order para sa inyong account."
 
