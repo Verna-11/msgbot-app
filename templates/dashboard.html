@@ -7,7 +7,7 @@
 <body class="bg-gray-100 min-h-screen px-6 py-10">
   <div class="max-w-7xl mx-auto">
     <div class="mb-6 flex justify-between items-center">
-      <h1 class="text-2xl font-bold text-pink-600 dark:text-sky-250 rounded-lg bg-pink shadow hover:bg-pink-500 hover:text-[#ffffff]">Welcome  {{ seller }}</h1>
+      <h1 class="text-2xl font-bold text-pink-600 dark:text-sky-250 rounded-lg bg-pink shadow hover:bg-pink-500 hover:text-[#ffffff]">Welcome {{ seller }}</h1>
       <a href="/logout" class="text-white-500 hover:rounded-lg hover:bg-pink-500 hover:text-[#ffffff]">Logout</a>
     </div>
 
@@ -38,8 +38,8 @@
             <td class="px-4 py-2 font-mono text-xs text-pink-500">{{ order[12] }}</td>  <!-- order_key -->
             <td class="px-4 py-2">{{ order[3] }}</td>  <!-- product -->
             <td class="px-4 py-2">{{ order[9] }}</td>  <!-- quantity -->
-            <td class="px-4 py-2">₱{{ '%.2f' | format(order[10]|float) }}</td>  <!-- unit_price -->
-            <td class="px-4 py-2 font-semibold">₱{{ '%.2f' | format(order[8]|float) }}</td>  <!-- price -->
+            <td class="px-4 py-2">₱{{ '%.2f' | format(order['unit_price']|float) }}</td>  <!-- unit_price -->
+            <td class="px-4 py-2 font-semibold">₱{{ '%.2f' | format(order['price']|float) }}</td>  <!-- price -->
             <td class="px-4 py-2">{{ order[7] }}</td>  <!-- payment -->
             <td class="px-4 py-2">{{ order[4] }} <!-- Buyer's name ---></td>
             <td class="px-4 py-2">{{ order[5] }}</td>  <!-- address -->
