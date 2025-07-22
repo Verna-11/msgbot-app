@@ -18,7 +18,7 @@
 
     <div class="overflow-x-auto bg-white rounded-lg shadow">
       <table class="min-w-full divide-y divide-gray-200" id="ordersTable">
-        <thead class="bg-gray-50 hover:bg-pink-50 text-[#ffffff]">
+        <thead class="text-gray-100 bg-gray-50 hover:bg-pink-50 hover:text-[#ffffff]">
           <tr>
             <th class="px-4 py-2 text-left text-sm font-semibold">Order Key</th>
             <th class="px-4 py-2 text-left text-sm font-semibold">Product</th>
@@ -34,17 +34,19 @@
         </thead>
         <tbody class="divide-y divide-gray-100">
           {% for order in orders %}
-          <tr class="hover:bg-pink-69">
-            <td class="px-4 py-2 font-mono text-xs text-pink-500">{{ order[12] }}</td>  <!-- order_key -->
-            <td class="px-4 py-2">{{ order[3] }}</td>  <!-- product -->
-            <td class="px-4 py-2">{{ order[9] }}</td>  <!-- quantity -->
-            <td class="px-4 py-2">₱{{ '%.2f' | format(order['unit_price']|float) }}</td>  <!-- unit_price -->
-            <td class="px-4 py-2 font-semibold">₱{{ '%.2f' | format(order['price']|float) }}</td>  <!-- price -->
-            <td class="px-4 py-2">{{ order[7] }}</td>  <!-- payment -->
-            <td class="px-4 py-2">{{ order[4] }} <!-- Buyer's name ---></td>
-            <td class="px-4 py-2">{{ order[5] }}</td>  <!-- address -->
-            <td class="px-4 py-2">{{ order[6] }}</td>  <!-- phone -->
-            <td class="px-4 py-2 text-sm text-gray-600">{{ order['created_at'].strftime('%Y-%B-%d %H:%M') if order[11] is not string else order['created_at'] }}</td>
+          <tr class="bg-gray-50 hover:bg-pink-200 hover:text-[#ffffff]">
+            <td class="px-4 py-2 font-mono text-xs text-pink-500">{{ order['order_key'] }}</td>
+            <td class="px-4 py-2">{{ order['product'] }}</td>
+            <td class="px-4 py-2">{{ order['quantity'] }}</td>
+            <td class="px-4 py-2">₱{{ '%.2f' | format(order['unit_price']|float) }}</td>
+            <td class="px-4 py-2 font-semibold">₱{{ '%.2f' | format(order['price']|float) }}</td>
+            <td class="px-4 py-2">{{ order['payment'] }}</td>
+            <td class="px-4 py-2">{{ order['buyer_name'] }}</td>
+            <td class="px-4 py-2">{{ order['address'] }}</td>
+            <td class="px-4 py-2">{{ order['phone'] }}</td>
+            <td class="px-4 py-2 text-sm text-gray-600">
+              {{ order['created_at'].strftime('%Y-%B-%d %H:%M') if order['created_at'] is not string else           order['created_at'] }}
+            </td>
           </tr>
           {% endfor %}
           
