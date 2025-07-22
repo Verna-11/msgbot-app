@@ -251,8 +251,8 @@ def handle_user_message(user_id, msg):
             "sorry hindi ko po gets\n"
             "order example: *#mynamestore big burger 100*\n"
             "order example: *#mynamestore big burger 2x100*\n"
-            "order example: *big burger 100x2 #mynamestore\n"
-            "mine example: *#mynamestore red bag 2x100 *\n"
+            "order example: *big burger 100x2 #mynamestore*\n"
+            "mine example: *#mynamestore red bag 2x100*\n"
             "mine example: *#mynamestore red bag 100 x2*\n"
             "mine example: *red bag 100 2x100 #mynamestore*\n"
             "edit example: *edit a1b2c3d4*\n"
@@ -328,7 +328,7 @@ def handle_user_message(user_id, msg):
             return (
                 f"📝 Reusing your previous info:\n"
                 f"👤 {name}\n📍 {address}\n📞 {phone}\n💳 {payment}\n\n"
-                f"✅ Send *yes* to confirm this order or *edit* to update details."
+                f"✅ Send *yes or y* to confirm this order or *edit* to update details."
             )
         # ✅ Get full name from Facebook API
         full_name = get_user_full_name(user_id, PAGE_ACCESS_TOKEN)
@@ -436,19 +436,9 @@ def handle_user_message(user_id, msg):
             f"💳 Payment: {order['payment']}"
         )
     elif state["step"] == "awaiting_confirm":
-        if msg.strip().lower() == "yes":
+        if msg.strip().lower() == "yes" or msg.strip().lower() == "y":
             order = state["order"]
             order_key = save_order(user_id, order)
-    
-            # 🔐 Save user profile for future reuse
-            save_user_profile(
-                user_id,
-                order["name"],
-                order["address"],
-                order["phone"],
-                order["payment"]
-            )
-    
             user_states.pop(user_id, None)
             return (
                 f"✅ Order confirmed!\n\n"
@@ -488,6 +478,7 @@ def handle_user_message(user_id, msg):
         state["order"]["payment"] = msg
         order = state["order"]
         order_key = save_order(user_id, order)
+        save_user_profile(user_id, order["name"], order["address"], order["phone"], order["payment"])
         user_states.pop(user_id)
         return (
             f"✅ Order confirmed!\n\n"
