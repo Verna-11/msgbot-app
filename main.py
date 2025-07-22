@@ -7,7 +7,8 @@ import re
 import os
 import uuid
 import psycopg2
-from psycopg2.extras import RealDictCursor, UniqueViolation
+from psycopg2.extras import RealDictCursor
+from psycopg2.errors import UniqueViolation
 
 from pytz import timezone
 
