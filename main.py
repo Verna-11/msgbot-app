@@ -325,7 +325,7 @@ def handle_user_message(user_id, msg):
             qty = int(msg)
             state["order"]["quantity"] = qty
             state["step"] = "edit_unit_price"
-            return "💸 New unit price?"
+            return "💸 New unit *price*?"
         except ValueError:
             return "❌ Please enter a valid *number* for *quantity*."
 
@@ -415,16 +415,16 @@ def handle_user_message(user_id, msg):
         user_states.pop(user_id)
         return (
             f"✅ Order confirmed!\n\n"
-            f"    Order Key: {order_key}\n"
+            f"🆔 Order Key: {order_key}\n"
             f"📦 Product: {order['product']}\n"
-            f"    Quantity {order['quantity']} X ₱{order['unit_price']:.2f} \n"
+            f"🔢 Quantity: {order['quantity']} x ₱{order['unit_price']:.2f}\n"
             f"💰 Total: ₱{order['price']:.2f}\n"
             f"👤 Name: {order['name']}\n"
             f"📍 Address: {order['address']}\n"
             f"📞 Phone: {order['phone']}\n"
-            f"💰 Payment: {order['payment']}\n\n"
-            f"    Cancel: Gusto po i cancel send >> *cancel {order_key}*\n"
-            f"    Edit: Gusto po i edit yung product o price? >> *edit {order_key}*\n"
+            f"💳 Payment: {order['payment']}\n\n"
+            f"❌ Cancel: Gusto po i-cancel? Send >> *cancel {order_key}*\n"
+            f"✏️ Edit: May babaguhin po sa product o price? Send >> *edit {order_key}*\n"
         )
     else:
         user_states.pop(user_id, None)
