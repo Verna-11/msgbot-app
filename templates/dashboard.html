@@ -6,6 +6,20 @@
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-pink-50 min-h-screen px-4 sm:px-6 py-6 sm:py-10">
+  {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <div class="space-y-2 mb-4">
+          {% for category, message in messages %}
+            <div class="px-4 py-2 rounded text-white 
+                        {% if category == 'success' %} bg-green-500 
+                        {% elif category == 'danger' %} bg-red-500 
+                        {% else %} bg-gray-500 {% endif %}">
+              {{ message }}
+            </div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
   <div class="max-w-7xl mx-auto">
     <div class="mb-12 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
   <h1 class="text-2xl font-bold text-[#ffffff] dark:text-sky-250 rounded-full bg-pink-500 shadow px-4 py-2 hover:hover:bg-white hover:text-pink-500 transition-colors duration-200">

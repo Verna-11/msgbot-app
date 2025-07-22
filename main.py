@@ -117,6 +117,15 @@ def init_pg():
             password TEXT
         )
     ''')
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS user_profiles (
+            user_id TEXT PRIMARY KEY,
+            name TEXT,
+            address TEXT,
+            phone TEXT,
+            payment TEXT
+        )
+    ''')
     conn.commit()
     cur.close()
     conn.close()
@@ -233,14 +242,19 @@ def handle_user_message(user_id, msg):
         conn.close()
         return result
     state = user_states.get(user_id, {})
+    
     if 'step' not in state:
         match = re.search(r'#([A-Za-z0-9_]+)', msg)
         if not match:
             user_states.pop(user_id, None)  # clear any existing state
             return (
             "sorry hindi ko po gets\n"
-            "order example: *#mynamestore red bag 100*\n"
-            "order example: *#mynamestore red bag 100 x3*\n"
+            "order example: *#mynamestore big burger 100*\n"
+            "order example: *#mynamestore big burger 2x100*\n"
+            "order example: *big burger 100x2 #mynamestore\n"
+            "mine example: *#mynamestore red bag 2x100 *\n"
+            "mine example: *#mynamestore red bag 100 x2*\n"
+            "mine example: *red bag 100 2x100 #mynamestore*\n"
             "edit example: *edit a1b2c3d4*\n"
             "cancel example: *cancel a1b2c3d4*\n"
             
@@ -293,7 +307,29 @@ def handle_user_message(user_id, msg):
             unit_price = None
             total_price = None
             product = product_text.strip()
-
+        #cache name, address, payment, phone
+        profile = get_user_profile(user_id)
+        if profile:
+            name, address, phone, payment = profile
+            user_states[user_id] = {
+                "step": "awaiting_confirm",
+                "order": {
+                    "name": name,
+                    "address": address,
+                    "phone": phone,
+                    "payment": payment,
+                    "seller": seller_tag,
+                    "product": product,
+                    "unit_price": unit_price,
+                    "quantity": quantity,
+                    "price": total_price
+                }
+            }
+            return (
+                f"📝 Reusing your previous info:\n"
+                f"👤 {name}\n📍 {address}\n📞 {phone}\n💳 {payment}\n\n"
+                f"✅ Send *yes* to confirm this order or *edit* to update details."
+            )
         # ✅ Get full name from Facebook API
         full_name = get_user_full_name(user_id, PAGE_ACCESS_TOKEN)
         if not is_full_name(full_name):
@@ -399,6 +435,38 @@ def handle_user_message(user_id, msg):
             f"📞 Phone: {order['phone']}\n"
             f"💳 Payment: {order['payment']}"
         )
+    elif state["step"] == "awaiting_confirm":
+        if msg.strip().lower() == "yes":
+            order = state["order"]
+            order_key = save_order(user_id, order)
+    
+            # 🔐 Save user profile for future reuse
+            save_user_profile(
+                user_id,
+                order["name"],
+                order["address"],
+                order["phone"],
+                order["payment"]
+            )
+    
+            user_states.pop(user_id, None)
+            return (
+                f"✅ Order confirmed!\n\n"
+                f"🆔 Order Key: {order_key}\n"
+                f"📦 Product: {order['product']}\n"
+                f"🔢 Quantity: {order['quantity']} x ₱{order['unit_price']:.2f}\n"
+                f"💰 Total: ₱{order['price']:.2f}\n"
+                f"👤 Name: {order['name']}\n"
+                f"📍 Address: {order['address']}\n"
+                f"📞 Phone: {order['phone']}\n"
+                f"💳 Payment: {order['payment']}\n\n"
+                f"❌ Cancel: Gusto po i-cancel? Send >> *cancel {order_key}*\n"
+                f"✏️ Edit: May babaguhin po sa product o price? Send >> *edit {order_key}*"
+            )
+        else:
+            # Let user change cached details if they said something other than "yes"
+            user_states[user_id]["step"] = "ask_name"
+            return "✏️ No problem! Let's update your info.\nPlease enter your *full name*:"
 
     elif state["step"] == "ask_name":
         name = msg.strip()
@@ -438,10 +506,33 @@ def handle_user_message(user_id, msg):
         user_states.pop(user_id, None)
         return "Oops, something went wrong. Let's start over. Please send your order again."
 
+def get_user_profile(user_id):
+    conn = get_pg_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT name, address, phone, payment FROM user_profiles WHERE user_id = %s", (user_id,))
+    result = cur.fetchone()
+    cur.close()
+    conn.close()
+    return result if result else None
 
 def generate_order_key():
     return str(uuid.uuid4())[:8]  # short, user-friendly ID (8 chars)
 
+def save_user_profile(user_id, name, address, phone, payment):
+    conn = get_pg_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO user_profiles (user_id, name, address, phone, payment)
+        VALUES (%s, %s, %s, %s, %s)
+        ON CONFLICT (user_id) DO UPDATE SET
+            name = EXCLUDED.name,
+            address = EXCLUDED.address,
+            phone = EXCLUDED.phone,
+            payment = EXCLUDED.payment
+    """, (user_id, name, address, phone, payment))
+    conn.commit()
+    cur.close()
+    conn.close()
 
 def save_order(user_id, order):
     order_key = generate_order_key()
