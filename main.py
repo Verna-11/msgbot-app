@@ -139,6 +139,7 @@ def webhook():
                 send_message(sender_id, response)
     return "ok", 200
 
+
 #get name in facebook
 def get_user_full_name(psid, page_access_token):
     url = f"https://graph.facebook.com/v23.0/{psid}"
@@ -162,6 +163,11 @@ def is_full_name(name):
     return len(name.strip().split()) >= 2
 
 def handle_user_message(user_id, msg):
+    if msg.strip().lower() == "invoice":
+        orders = get_orders_by_sender(user_id)
+        invoice_message = generate_invoice_for_sender(user_id, orders)
+        send_message(user_id, invoice_message)
+
     if msg.lower().startswith("edit"):
         parts = msg.split(" ", 1)
         if len(parts) != 2 or not parts[1].strip():
@@ -472,6 +478,44 @@ def send_message(recipient_id, message_text):
     res = requests.post(url, headers=headers, params=params, json=payload)
     if res.status_code != 200:
         print("Failed to send message:", res.text)
+
+#invoice
+def generate_invoice_for_sender(sender_id, orders):
+    if not orders:
+        return "❌ Wala pong nakitang order para sa inyong account."
+
+    lines = [f"🧾 *Invoice Summary for {orders[0]['name']}*\n━━━━━━━━━━━━━━━━━━━━━━"]
+    total_amount = 0
+
+    for i, order in enumerate(orders, start=1):
+        subtotal = float(order['unit_price']) * int(order['quantity'])
+        total_amount += subtotal
+
+        lines.append(
+            f"🔖 Order {i}:\n"
+            f"🆔 Order Key: {order['order_key']}\n"
+            f"📦 Product: {order['product']}\n"
+            f"🔢 Qty: {order['quantity']} × ₱{float(order['unit_price']):.2f}\n"
+            f"💰 Subtotal: ₱{subtotal:.2f}\n"
+            f"🕒 Date: {order['created_at'].strftime('%Y-%m-%d %H:%M')}\n"
+            f"━━━━━━━━━━━━━━━━━━━━━━"
+        )
+
+    lines.append(f"🧮 *Total Amount: ₱{total_amount:.2f}*")
+    lines.append("✅ Salamat po sa inyong mga order!")
+
+    return "\n".join(lines)
+
+def get_orders_by_sender(sender_id):
+    conn = psycopg2.connect(...)  # your DB config
+    cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+
+    cur.execute("SELECT * FROM orders WHERE sender_id = %s ORDER BY created_at DESC", (sender_id,))
+    orders = cur.fetchall()
+
+    cur.close()
+    conn.close()
+    return orders
 
 # 📊 Dashboard View
 @app.route('/')

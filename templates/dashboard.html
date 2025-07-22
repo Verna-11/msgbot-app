@@ -40,15 +40,15 @@
         <tbody class="divide-y divide-gray-100">
           {% for order in orders %}
           <tr class="bg-white even:bg-gray-100 text-black hover:bg-pink-500 hover:text-white transition-colors duration-200">
-            <td class="px-4 py-2 font-mono text-xs text-pink-500 hover:text-black">{{ order['order_key'] }}</td>
+            <td class="px-4 py-2 font-mono font-bold text-xs text-pink-500 hover:text-black">{{ order['order_key'] }}</td>
             <td class="px-4 py-2">{{ order['product'] }}</td>
             <td class="px-4 py-2">{{ order['quantity'] }}</td>
             <td class="px-4 py-2">₱{{ '%.2f' | format(order['unit_price']|float) }}</td>
             <td class="px-4 py-2 font-semibold">₱{{ '%.2f' | format(order['price']|float) }}</td>
-            <td class="px-4 py-2">{{ order['payment'] }}</td>
-            <td class="px-4 py-2">{{ order['name'] }}</td>
-            <td class="px-4 py-2">{{ order['address'] }}</td>
-            <td class="px-4 py-2">{{ order['phone'] }}</td>
+            <td class="px-4 py-2 font-arial">{{ order['payment'] }}</td>
+            <td class="px-4 py-2 font-bold">{{ order['name'] }}</td>
+            <td class="px-4 py-2 font-bold">{{ order['address'] }}</td>
+            <td class="px-4 py-2 font-bold">{{ order['phone'] }}</td>
             <td class="px-4 py-2 text-sm text-gray-600">
               {{ order['created_at'].strftime('%Y-%B-%d %H:%M') if order['created_at'] is not string else order['created_at'] }}
             </td>
