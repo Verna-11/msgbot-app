@@ -507,7 +507,7 @@ def generate_invoice_for_sender(sender_id, orders):
     return "\n".join(lines)
 
 def get_orders_by_sender(sender_id):
-    conn = psycopg2.connect(...)  # your DB config
+    conn = get_pg_connection() # DB configuration
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
     cur.execute("SELECT * FROM orders WHERE sender_id = %s ORDER BY created_at DESC", (sender_id,))
