@@ -2,24 +2,27 @@
 <html>
 <head>
   <title>{{ seller }}'s Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-pink-50 min-h-screen px-6 py-10">
+<body class="bg-pink-50 min-h-screen px-4 sm:px-6 py-6 sm:py-10">
   <div class="max-w-7xl mx-auto">
-    <div class="mb-12 flex justify-between items-center">
-      <h1 class="text-2xl font-bold text-pink-600 dark:text-sky-250 rounded-lg bg-pink-100 shadow px-4 py-2 hover:bg-pink-500 hover:text-white transition-colors duration-200">
-        Welcome {{ seller }}
-      </h1>
-      <a href="/logout" class="text-white text-blue-600 dark:text-sky-250 rounded-lg bg-blue-500 shadow px-4 py-1 hover:rounded-lg hover:bg-pink-100 hover:text-blue-500">Logout</a>
-    </div>
+    <div class="mb-12 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
+  <h1 class="text-2xl font-bold text-pink-600 dark:text-sky-250 rounded-lg bg-pink-100 shadow px-4 py-2 hover:bg-pink-500 hover:text-white transition-colors duration-200">
+    Welcome {{ seller }}
+  </h1>
+  <a href="/logout" class="text-white dark:text-sky-250 rounded-lg bg-pink-500 shadow px-4 py-1 hover:bg-white hover:text-pink-500 transition-colors duration-200">
+    <strong>Logout</strong>
+  </a>
+  </div>
 
-    <div class="mb-4">
-      <input type="text" id="searchInput" placeholder="Look for orders.."
-             class="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500">
-    </div>
+    <div class="mb-6">
+  <input type="text" id="searchInput" placeholder="Look for orders..."
+         class="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500">
+</div>
 
-    <div class="overflow-x-auto bg-pink-200 rounded-lg shadow">
-      <table class="min-w-full divide-y divide-gray-200" id="ordersTable">
+    <div class="w-full overflow-x-auto bg-pink-200 rounded-lg shadow">
+      <table class="min-w-full divide-y divide-gray-200 text-sm" id="ordersTable">
         <thead class="bg-gray-50 text-gray-600">
           <tr>
             <th class="px-4 py-2 text-left text-sm font-semibold">Order Key</th>
@@ -36,7 +39,7 @@
         </thead>
         <tbody class="divide-y divide-gray-100">
           {% for order in orders %}
-          <tr class="bg-gray-100 text-black hover:bg-pink-500 hover:text-white transition-colors duration-200">
+          <tr class="bg-white even:bg-gray-100 text-black hover:bg-pink-500 hover:text-white transition-colors duration-200">
             <td class="px-4 py-2 font-mono text-xs text-pink-500 hover:text-black">{{ order['order_key'] }}</td>
             <td class="px-4 py-2">{{ order['product'] }}</td>
             <td class="px-4 py-2">{{ order['quantity'] }}</td>
