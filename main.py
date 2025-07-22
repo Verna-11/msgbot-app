@@ -7,7 +7,8 @@ import re
 import os
 import uuid
 import psycopg2
-from psycopg2.extras import RealDictCursor
+from psycopg2.extras import RealDictCursor, UniqueViolation
+
 from pytz import timezone
 
 app = Flask(__name__)
@@ -35,7 +36,7 @@ def register():
             conn.commit()
             flash("Registration successful. Please log in.", "success")
             return redirect(url_for('login'))
-        except psycopg2.errors.UniqueViolation:
+        except UniqueViolation:
             conn.rollback()
             flash("Seller already exists.", "danger")
         finally:
@@ -506,11 +507,11 @@ def generate_invoice_for_sender(sender_id, orders):
 
     return "\n".join(lines)
 
-def get_orders_by_sender(sender_id):
+def get_orders_by_sender(user_id):
     conn = get_pg_connection() # DB configuration
     cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
 
-    cur.execute("SELECT * FROM orders WHERE sender_id = %s ORDER BY created_at DESC", (sender_id,))
+    cur.execute("SELECT * FROM orders WHERE user_id = %s ORDER BY created_at DESC", (user_id,))
     orders = cur.fetchall()
 
     cur.close()
