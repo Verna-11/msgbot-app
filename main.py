@@ -229,9 +229,10 @@ def handle_user_message(user_id, msg):
             user_states.pop(user_id, None)  # clear any existing state
             return (
             "sorry hindi ko po gets\n"
-            "order example: #mynamestore red bag 100\n"
-            "order example: #mynamestore red bag 100 x3\n"
-            "edit example: edit a1b2c3d4\n"
+            "order example: *#mynamestore red bag 100*\n"
+            "order example: *#mynamestore red bag 100 x3*\n"
+            "edit example: *edit a1b2c3d4*\n"
+            "cancel example: *cancel a1b2c3d4*\n"
             
             )
 
@@ -296,7 +297,7 @@ def handle_user_message(user_id, msg):
                     "price": total_price
                 }
             }
-            return f"Thanks for your order for '{product}' from seller #{seller_tag}.\nMay I have your full name?"
+            return f"Thanks for your order for *'{product}'* from seller *#{seller_tag}.*\nMay I have your *full name*?"
         else:
             user_states[user_id] = {
                 "step": "awaiting_address",
@@ -309,13 +310,13 @@ def handle_user_message(user_id, msg):
                     "price": total_price
                 }
             }
-            return "📍 Please enter your delivery address:"
+            return "📍 Please enter your *delivery address*:"
 
 
     elif state["step"] == "edit_product":
         state["order"]["product"] = msg
         state["step"] = "edit_quantity"
-        return "🔢 New quantity?"
+        return "🔢 New *quantity*?"
 
     elif state["step"] == "edit_quantity":
         try:
@@ -324,7 +325,7 @@ def handle_user_message(user_id, msg):
             state["step"] = "edit_unit_price"
             return "💸 New unit price?"
         except ValueError:
-            return "❌ Please enter a valid number for quantity."
+            return "❌ Please enter a valid *number* for *quantity*."
 
     elif state["step"] == "edit_unit_price":
         try:
@@ -332,18 +333,18 @@ def handle_user_message(user_id, msg):
             state["order"]["unit_price"] = price
             state["order"]["price"] = price * state["order"]["quantity"]
             state["step"] = "edit_address"
-            return "📍 New address?"
+            return "📍 New *address*?"
         except ValueError:
-            return "❌ Please enter a valid price (e.g., 99.99)"
+            return "❌ Please enter a valid *price (e.g., 99.99)*"
     elif state["step"] == "edit_address":
         state["order"]["address"] = msg
         state["step"] = "edit_phone"
-        return "📞 Got it. What's the new phone number?"
+        return "📞 Got it. What's the new *phone number*?"
 
     elif state["step"] == "edit_phone":
         state["order"]["phone"] = msg
         state["step"] = "edit_payment"
-        return "💳 Noted. What's the new payment method?"
+        return "💳 Noted. What's the new *payment method*?"
 
     elif state["step"] == "edit_payment":
         state["order"]["payment"] = msg
@@ -400,11 +401,11 @@ def handle_user_message(user_id, msg):
     elif state["step"] == "awaiting_address":
         state["order"]["address"] = msg
         state["step"] = "awaiting_phone"
-        return "Noted. What's your phone number? o alam na po ni seller"
+        return "Noted. What's your *phone number*?"
     elif state["step"] == "awaiting_phone":
         state["order"]["phone"] = msg
         state["step"] = "awaiting_payment"
-        return "Last step Bank Transfer, Maya, Gcash or Cash on Delivery?"
+        return "*Mode Of Payment* Gcash, Maya, Bank, Cash, COD"
     elif state["step"] == "awaiting_payment":
         state["order"]["payment"] = msg
         order = state["order"]
