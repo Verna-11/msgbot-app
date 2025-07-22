@@ -420,8 +420,8 @@ def handle_user_message(user_id, msg):
             f"📍 Address: {order['address']}\n"
             f"📞 Phone: {order['phone']}\n"
             f"💰 Payment: {order['payment']}\n\n"
-            f"    Cancel: Gusto po i cancel send >> cancel {order_key}\n"
-            f"    Edit: Gusto po i edit yung product o price? >> edit {order_key}\n"
+            f"    Cancel: Gusto po i cancel send >> *cancel {order_key}*\n"
+            f"    Edit: Gusto po i edit yung product o price? >> *edit {order_key}*\n"
         )
     else:
         user_states.pop(user_id, None)
