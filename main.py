@@ -7,6 +7,7 @@ import re
 import os
 import uuid
 import psycopg2
+from pytz import timezone
 
 app = Flask(__name__)
 
@@ -163,7 +164,7 @@ def handle_user_message(user_id, msg):
     if msg.lower().startswith("edit"):
         parts = msg.split(" ", 1)
         if len(parts) != 2 or not parts[1].strip():
-            return "❌ Please provide a valid order key to edit. Example: edit abcd1234"
+            return "❌ Please provide a valid order key to edit. Example: *edit abcd1234*"
     
         key = parts[1].strip()
         conn = get_pg_connection()
@@ -192,17 +193,17 @@ def handle_user_message(user_id, msg):
             return (
                 f"📝 Editing order `{key}` for '{product}'.\n"
                 f"Current product: {product}, Qty: {quantity}, Unit Price: ₱{unit_price:.2f}\n\n"
-                f"✏️ Please send the new **product name/description**:"
+                f"✏️ Please send the new *product name/description*:"
             )
         else:
             cur.close()
             conn.close()
-            return f"⚠️ No order found with key `{key}` that belongs to you."
+            return f"⚠️ *No order found* with key `{key}` that belongs to you."
 
     if msg.lower().startswith("cancel"):
         parts = msg.split(" ", 1)
         if len(parts) != 2 or not parts[1].strip():
-            return "❌ Please provide a valid order key. Example: cancel abcd1234"
+            return "❌ Please provide a valid *order key*. Example: *cancel abcd1234*"
 
         key = parts[1].strip().lower()
         conn = get_pg_connection()
@@ -215,9 +216,9 @@ def handle_user_message(user_id, msg):
         if order:
             cur.execute("DELETE FROM orders WHERE id = %s", (order[0],))
             conn.commit()
-            result = f"✅ Your order with key `{key}` has been canceled."
+            result = f"✅ Your order with key *`{key}`* has been *canceled.*"
         else:
-            result = f"⚠️ Order key `{key}` was not found or does not belong to you."
+            result = f"⚠️ Order key *`{key}`* was not *found* or does not *belong* to you."
 
         cur.close()
         conn.close()
@@ -485,7 +486,30 @@ def dashboard():
     cur.close()
     conn.close()
 
-    return render_template("dashboard.html", orders=orders, seller=seller)
+    # Convert UTC to Philippine time
+    ph_tz = timezone('Asia/Manila')
+    orders_with_local_time = []
+    for order in orders:
+        order_dict = {
+            "id": order[0],
+            "user_id": order[1],
+            "seller": order[2],
+            "product": order[3],
+            "name": order[4],
+            "address": order[5],
+            "phone": order[6],
+            "payment": order[7],
+            "price": order[8],
+            "quantity": order[9],
+            "unit_price": order[10],
+            "created_at": order[11].astimezone(ph_tz),
+            "order_key": order[12],
+        }
+        orders_with_local_time.append(order_dict)
+    
+    return render_template("dashboard.html", orders=orders_with_local_time, seller=seller)
+
+    
 
 #delete data for 7 days scheduler
 scheduler = BackgroundScheduler()
