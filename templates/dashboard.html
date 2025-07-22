@@ -61,6 +61,7 @@
   </div>
 
   <script>
+
     // Simple search filter
     const input = document.getElementById("searchInput");
     const table = document.getElementById("ordersTable").getElementsByTagName("tbody")[0];
@@ -72,5 +73,18 @@
       }
     });
   </script>
+  
+  <script>
+    // Auto-hide flash messages after 3 seconds
+    setTimeout(() => {
+      const flashBox = document.getElementById("flash-messages");
+      if (flashBox) {
+        flashBox.style.opacity = "0";
+        setTimeout(() => flashBox.remove(), 500); // remove after fade out
+      }
+    }, 3000);
+  </script>
+</body>
+</html>
 </body>
 </html>
