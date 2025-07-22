@@ -7,6 +7,7 @@ import re
 import os
 import uuid
 import psycopg2
+from psycopg2.extras import RealDictCursor
 from pytz import timezone
 
 app = Flask(__name__)
@@ -506,7 +507,7 @@ def dashboard():
             "order_key": order[12],
         }
         orders_with_local_time.append(order_dict)
-    
+
     return render_template("dashboard.html", orders=orders_with_local_time, seller=seller)
 
     
