@@ -1,13 +1,12 @@
 from datetime import datetime, timedelta
+from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, request, render_template,session, redirect, url_for, flash
 from werkzeug.security import generate_password_hash, check_password_hash
-import requests, re
+import requests
+import re
 import os
 import uuid
 import psycopg2
-from psycopg2.extras import RealDictCursor
-from urllib.parse import urlparse
-
 
 app = Flask(__name__)
 
@@ -151,7 +150,7 @@ def get_user_full_name(psid, page_access_token):
             data = response.json()
             return f"{data.get('first_name', '')} {data.get('last_name', '')}".strip()
     except Exception as e:
-        print("Error fetching user name:", e)
+        return ("Error fetching user name:", e)
     return None
 
 #checking capture name 
@@ -229,9 +228,9 @@ def handle_user_message(user_id, msg):
         if not match:
             user_states.pop(user_id, None)  # clear any existing state
             return (
-            "sorry hindi ko po naintindihan\n"
-            "order example: #mynamestore red bag 100 x2\n"
-            "order example: red bag ₱100 2x #mynamestore\n"
+            "sorry hindi ko po gets\n"
+            "order example: #mynamestore red bag 100\n"
+            "order example: #mynamestore red bag 100 x3\n"
             "edit example: edit a1b2c3d4\n"
             
             )
@@ -333,7 +332,7 @@ def handle_user_message(user_id, msg):
             state["order"]["unit_price"] = price
             state["order"]["price"] = price * state["order"]["quantity"]
             state["step"] = "edit_address"
-            return f"📍 New address?"
+            return "📍 New address?"
         except ValueError:
             return "❌ Please enter a valid price (e.g., 99.99)"
     elif state["step"] == "edit_address":
@@ -397,7 +396,7 @@ def handle_user_message(user_id, msg):
         
         state["order"]["name"] = name
         state["step"] = "awaiting_address"
-        return "📍 Thank you! Now, please enter your **delivery address**:"
+        return "📍 Thank you! Now, please enter your *delivery address*:"
     elif state["step"] == "awaiting_address":
         state["order"]["address"] = msg
         state["step"] = "awaiting_phone"
@@ -421,8 +420,8 @@ def handle_user_message(user_id, msg):
             f"📍 Address: {order['address']}\n"
             f"📞 Phone: {order['phone']}\n"
             f"💰 Payment: {order['payment']}\n\n"
-            f"    Cancel: Kung gusto po i cancel send >> cancel {order_key}\n"
-            f"    Edit: Kung gusto po i edit yung product o price >> edit {order_key}\n"
+            f"    Cancel: Gusto po i cancel send >> cancel {order_key}\n"
+            f"    Edit: Gusto po i edit yung product o price? >> edit {order_key}\n"
         )
     else:
         user_states.pop(user_id, None)
@@ -476,7 +475,7 @@ def send_message(recipient_id, message_text):
 def dashboard():
     seller = session.get("seller")
     if not seller:
-        return redirect(url_for('register'))
+        return redirect(url_for('login'))
 
     conn = get_pg_connection()
     cur = conn.cursor()
@@ -488,13 +487,9 @@ def dashboard():
     return render_template("dashboard.html", orders=orders, seller=seller)
 
 #delete data for 7 days scheduler
-from apscheduler.schedulers.background import BackgroundScheduler
-
 scheduler = BackgroundScheduler()
 scheduler.add_job(delete_old_orders, 'interval', days=1)  # run daily
 scheduler.start()
-
-
 
 # Start the app
 if __name__ == '__main__':
