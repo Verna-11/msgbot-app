@@ -44,7 +44,7 @@
             <td class="px-4 py-2">{{ order[4] }} <!-- Buyer's name ---></td>
             <td class="px-4 py-2">{{ order[5] }}</td>  <!-- address -->
             <td class="px-4 py-2">{{ order[6] }}</td>  <!-- phone -->
-            <td class="px-4 py-2 text-sm text-gray-600">{{ order[11].strftime('%Y-%B-%d %H:%M') if order[11] is not string else order[11] }}</td>
+            <td class="px-4 py-2 text-sm text-gray-600">{{ order['created_at'].strftime('%Y-%B-%d %H:%M') if order[11] is not string else order['created_at'] }}</td>
           </tr>
           {% endfor %}
           
