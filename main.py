@@ -18,7 +18,6 @@ load_dotenv()
 
 app = Flask(__name__)
 
-
 PAGE_ACCESS_TOKEN = os.getenv("PAGE_ACCESS_TOKEN")
 VERIFY_TOKEN = os.getenv("VERIFY_TOKEN")
 
@@ -28,25 +27,51 @@ app.secret_key = os.environ.get("SECRET_KEY")
 user_states = {}
 
 @app.route('/register', methods=['GET', 'POST'])
+@app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         seller = request.form['seller']
-        password = generate_password_hash(request.form['password'])
+        email = request.form['email']
+        password = request.form['password']
+        confirm_password = request.form['confirm_password']
 
-        conn = get_pg_connection()
-        cur = conn.cursor()
+        # Check if passwords match
+        if password != confirm_password:
+            flash('Passwords do not match.', 'danger')
+            return render_template('register.html')
+
+        # Hash password
+        hashed_password = generate_password_hash(password)
+
+        # Save to DB
         try:
-            cur.execute("INSERT INTO sellers (seller, password) VALUES (%s, %s)", (seller, password))
+            conn = psycopg2.connect("dbname=yourdb user=youruser password=yourpass")
+            cur = conn.cursor()
+
+            # Check if seller or email already exists
+            cur.execute("SELECT * FROM sellers WHERE seller_name = %s OR email = %s", (seller, email))
+            existing = cur.fetchone()
+            if existing:
+                flash('Seller or email already exists.', 'danger')
+                return render_template('register.html')
+
+            # Insert new seller
+            cur.execute("INSERT INTO sellers (seller_name, password, email) VALUES (%s, %s, %s)",
+                        (seller, hashed_password, email))
             conn.commit()
-            flash("Registration successful. Please log in.", "success")
-            return redirect(url_for('login'))
-        except UniqueViolation:
-            conn.rollback()
-            flash("Seller already exists.", "danger")
-        finally:
             cur.close()
             conn.close()
+
+            flash('Registration successful! You can now log in.', 'success')
+            return redirect(url_for('login'))
+
+        except Exception as e:
+            print("Error:", e)
+            flash('Registration failed. Please try again later.', 'danger')
+            return render_template('register.html')
+
     return render_template('register.html')
+
 
 
 @app.route('/login', methods=['GET', 'POST'])

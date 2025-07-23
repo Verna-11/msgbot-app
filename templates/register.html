@@ -8,9 +8,10 @@
 
   <div class="bg-white p-8 rounded-xl shadow-xl w-full max-w-md">
     <h2 class="text-2xl font-bold text-center mb-6">Seller Registration</h2>
+
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
-        <div class="space-y-2 mb-4">
+        <div id="flash-messages" class="space-y-2 mb-4">
           {% for category, message in messages %}
             <div class="px-4 py-2 rounded text-white 
                         {% if category == 'success' %} bg-pink-500 
@@ -22,16 +23,28 @@
         </div>
       {% endif %}
     {% endwith %}
-    <form method="POST" class="space-y-4">
+
+    <form method="POST" class="space-y-4" onsubmit="return validatePasswords()">
       {% if danger %}
       <div class="bg-red-100 text-red-700 px-4 py-2 rounded-md">
         {{ danger }}
       </div>
       {% endif %}
+
       <input name="seller" placeholder="Seller name" required
       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500">
-      <input name="password" type="password" placeholder="Password" required
+
+      <input name="email" type="email" placeholder="Email address" required
+        class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500">
+
+      <input id="password" name="password" type="password" placeholder="Password" required
       class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500">
+
+      <input id="confirm_password" type="password" placeholder="Confirm Password" required
+      class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500">
+
+      <p id="password-error" class="text-red-500 text-sm hidden">Passwords do not match.</p>
+
       <button type="submit"
       class="w-full bg-pink-500 text-white py-2 rounded-md hover:bg-pink-700 transition">Register</button>
     </form>
@@ -40,6 +53,7 @@
       Already have an account? <a href="/login" class="text-pink-600 hover:underline">Login</a>
     </p>
   </div>
+
   <script>
     // Auto-hide flash messages after 3 seconds
     setTimeout(() => {
@@ -49,9 +63,21 @@
         setTimeout(() => flashBox.remove(), 500); // remove after fade out
       }
     }, 3000);
+
+    // Validate that passwords match
+    function validatePasswords() {
+      const password = document.getElementById("password").value;
+      const confirmPassword = document.getElementById("confirm_password").value;
+      const errorMsg = document.getElementById("password-error");
+
+      if (password !== confirmPassword) {
+        errorMsg.classList.remove("hidden");
+        return false;
+      } else {
+        errorMsg.classList.add("hidden");
+        return true;
+      }
+    }
   </script>
 </body>
-  
-</body>
-</html>
 </html>
