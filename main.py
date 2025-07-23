@@ -153,6 +153,17 @@ def init_pg():
             payment TEXT
         )
     ''')
+
+    cur.execeuted('''
+        CREATE TABLE referrals (
+            id SERIAL PRIMARY KEY,
+            seller TEXT NOT NULL,
+            fb_user_id TEXT NOT NULL,
+            referred_at TIMESTAMP DEFAULT NOW(),
+            UNIQUE (seller, fb_user_id),
+            FOREIGN KEY (seller) REFERENCES sellers(seller) ON DELETE CASCADE
+        )
+    ''')
     conn.commit()
     cur.close()
     conn.close()
@@ -165,25 +176,28 @@ def webhook():
     if request.method == 'GET':
         if request.args.get("hub.verify_token") == VERIFY_TOKEN:
             return request.args.get("hub.challenge")
-        return "Invalid token"
+        return "Invalid token", 403
 
     data = request.get_json()
+
     for entry in data.get('entry', []):
         for messaging_event in entry.get('messaging', []):
             sender_id = messaging_event['sender']['id']
 
-            # 1. Handle referral
+            # Handle referral
             if 'referral' in messaging_event:
-                ref = messaging_event['referral']['ref']  # seller username
-                handle_referral(sender_id, ref)
-                send_message(sender_id, f"Welcome! You're visiting {ref}'s store 💖")
+                ref = messaging_event['referral'].get('ref')
+                if ref:
+                    handle_referral(sender_id, ref)
+                    send_message(sender_id, f"Welcome! You were referred by seller **{ref}** 💖")
 
-            # 2. Handle normal messages
+            # Handle regular message
             elif 'message' in messaging_event:
-                text = messaging_event['message'].get('text')
+                text = messaging_event['message'].get('text', '')
                 handle_user_message(sender_id, text)
 
     return "ok", 200
+
 
 
 
