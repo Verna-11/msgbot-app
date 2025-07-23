@@ -602,7 +602,7 @@ def generate_invoice_for_sender(user_id, orders):
         order_key, product, quantity, unit_price, price, address, phone, payment, created_at = order
         total += float(price)
 
-        manila_time = created_at.astimezone(ZoneInfo("Asia/Manila"))
+        manila_time = created_at.astimezone(manila)
 
         invoice_lines.append(
             f"\n📦 {idx}. {product}\n"
