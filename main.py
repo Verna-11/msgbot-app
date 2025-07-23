@@ -19,15 +19,13 @@ load_dotenv()
 app = Flask(__name__)
 
 
-
 PAGE_ACCESS_TOKEN = os.getenv("PAGE_ACCESS_TOKEN")
 VERIFY_TOKEN = os.getenv("VERIFY_TOKEN")
-user_states = {}
-
 
 DATABASE_URL = os.environ.get("DATABASE_URL")
+app.secret_key = os.environ.get("SECRET_KEY")
 
-app.secret_key = os.environ.get("SECRET_KEY", "secretnoclue")
+user_states = {}
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
