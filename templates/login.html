@@ -26,16 +26,27 @@
 
     <form method="POST" class="space-y-4">
       <input name="seller" placeholder="Seller name" required
-             class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+             class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500">
       <input name="password" type="password" placeholder="Password" required
-             class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+             class="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-pink-500">
       <button type="submit"
               class="w-full bg-pink-500 text-white py-2 rounded-md hover:bg-pink-700 transition">Login</button>
     </form>
 
     <p class="mt-4 text-sm text-center">
-      Don't have an account? <a href="/register" class="text-blue-600 hover:underline">Register</a>
+      Don't have an account? <a href="/register" class="text-pink-600 hover:underline">Register</a>
     </p>
   </div>
+  <script>
+    // Auto-hide flash messages after 3 seconds
+    setTimeout(() => {
+      const flashBox = document.getElementById("flash-messages");
+      if (flashBox) {
+        flashBox.style.opacity = "0";
+        setTimeout(() => flashBox.remove(), 500); // remove after fade out
+      }
+    }, 3000);
+  </script>
 </body>
+
 </html>
