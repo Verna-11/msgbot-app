@@ -632,12 +632,44 @@ def get_orders_by_sender(user_id):
     return orders
 
 
-# 📊 Dashboard View
+# 📊 Public View 
+@app.route('/viewer_dashboard')
+def viewer_dashboard():
+    # Connect to your database
+    conn = sqlite3.connect('your_database.db')
+    conn.row_factory = sqlite3.Row
+    cur = conn.cursor()
+
+    # Fetch all orders
+    cur.execute("SELECT * FROM orders ORDER BY created_at DESC")
+    orders = cur.fetchall()
+    conn.close()
+
+    # Convert UTC to Philippine Time
+    ph_tz = timezone('Asia/Manila')
+    orders_with_local_time = []
+    for order in orders:
+        order_dict = {
+            "id": order[0],
+            "user_id": order[1],
+            "seller": order[2],
+            "product": order[3],
+            "payment": order[7],
+            "price": order[8],
+            "quantity": order[9],
+            "unit_price": order[10],
+            "created_at": order[11].astimezone(ph_tz),
+            "order_key": order[12],
+        }
+        orders_with_local_time.append(order_dict)
+
+    return render_template('viewer_dashboard.html', orders=orders_with_local_time, seller='Public')
+# Seller Dashboard
 @app.route('/')
 def dashboard():
     seller = session.get("seller")
     if not seller:
-        return redirect(url_for('login'))
+        return redirect(url_for('viewer_dashboard'))
 
     conn = get_pg_connection()
     cur = conn.cursor()
