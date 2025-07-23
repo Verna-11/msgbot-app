@@ -154,7 +154,7 @@ def init_pg():
         )
     ''')
 
-    cur.executed('''
+    cur.execute('''
         CREATE TABLE referrals (
             id SERIAL PRIMARY KEY,
             seller TEXT NOT NULL,
