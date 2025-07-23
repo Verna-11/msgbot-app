@@ -153,17 +153,6 @@ def init_pg():
             payment TEXT
         )
     ''')
-
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS referrals (
-            id SERIAL PRIMARY KEY,
-            seller TEXT NOT NULL,
-            fb_user_id TEXT NOT NULL,
-            referred_at TIMESTAMP DEFAULT NOW(),
-            UNIQUE (seller, fb_user_id),
-            FOREIGN KEY (seller) REFERENCES sellers(seller) ON DELETE CASCADE
-        )
-    ''')
     conn.commit()
     cur.close()
     conn.close()
@@ -176,29 +165,17 @@ def webhook():
     if request.method == 'GET':
         if request.args.get("hub.verify_token") == VERIFY_TOKEN:
             return request.args.get("hub.challenge")
-        return "Invalid token", 403
+        return "Invalid token"
 
     data = request.get_json()
-
-    for entry in data.get('entry', []):
-        for messaging_event in entry.get('messaging', []):
-            sender_id = messaging_event['sender']['id']
-
-            # Handle referral
-            if 'referral' in messaging_event:
-                ref = messaging_event['referral'].get('ref')
-                if ref:
-                    handle_referral(sender_id, ref)
-                    send_message(sender_id, f"Welcome! You were referred by seller **{ref}** 💖")
-
-            # Handle regular message
-            elif 'message' in messaging_event:
-                text = messaging_event['message'].get('text', '')
-                handle_user_message(sender_id, text)
-
+    for entry in data.get("entry", []):
+        for msg_event in entry.get("messaging", []):
+            sender_id = msg_event["sender"]["id"]
+            if "message" in msg_event and "text" in msg_event["message"]:
+                user_message = msg_event["message"]["text"].strip()
+                response = handle_user_message(sender_id, user_message)
+                send_message(sender_id, response)
     return "ok", 200
-
-
 
 
 #get name in facebook
@@ -223,42 +200,21 @@ def is_full_name(name):
         return False
     return len(name.strip().split()) >= 2
 
-#handle referral
-def handle_referral(user_id, seller):
-    conn = get_pg_connection()
-    cur = conn.cursor()
-    try:
-        cur.execute('''
-            INSERT INTO referrals (seller, fb_user_id)
-            VALUES (%s, %s)
-            ON CONFLICT (seller, fb_user_id) DO NOTHING
-        ''', (seller, user_id))
-        conn.commit()
-    except Exception as e:
-        print(f"Referral log failed: {e}")
-    finally:
-        cur.close()
-        conn.close()
-
-#handle message
 def handle_user_message(user_id, msg):
-    msg = msg.strip()
-
     if msg.lower().startswith("invoice"):
         orders = get_orders_by_sender(user_id)
         invoice_message = generate_invoice_for_sender(user_id, orders)
         send_message(user_id, invoice_message)
-        return "ok"
-
-    elif msg.lower().startswith("edit"):
+        return
+    if msg.lower().startswith("edit"):
         parts = msg.split(" ", 1)
         if len(parts) != 2 or not parts[1].strip():
-            send_message(user_id, "❌ Please provide a valid order key to edit. Example: *edit abcd1234*")
-            return "ok"
-        
+            return "❌ Please provide a valid order key to edit. Example: *edit abcd1234*"
+    
         key = parts[1].strip()
         conn = get_pg_connection()
         cur = conn.cursor()
+    
         cur.execute("SELECT product, quantity, unit_price, address, phone, payment FROM orders WHERE order_key = %s AND user_id = %s", (key, user_id))
         order = cur.fetchone()
 
@@ -277,61 +233,59 @@ def handle_user_message(user_id, msg):
                     "payment": payment
                 }
             }
-            send_message(user_id, (
+            cur.close()
+            conn.close()
+            return (
                 f"📝 Editing order `{key}` for '{product}'.\n"
                 f"Current product: {product}, Qty: {quantity}, Unit Price: ₱{unit_price:.2f}\n\n"
                 f"✏️ Please send the new *product name/description*:"
-            ))
+            )
         else:
-            send_message(user_id, f"⚠️ *No order found* with key `{key}` that belongs to you.")
-        cur.close()
-        conn.close()
-        return "ok"
+            cur.close()
+            conn.close()
+            return f"⚠️ *No order found* with key `{key}` that belongs to you."
 
-    elif msg.lower().startswith("cancel"):
+    if msg.lower().startswith("cancel"):
         parts = msg.split(" ", 1)
         if len(parts) != 2 or not parts[1].strip():
-            send_message(user_id, "❌ Please provide a valid *order key*. Example: *cancel abcd1234*")
-            return "ok"
+            return "❌ Please provide a valid *order key*. Example: *cancel abcd1234*"
 
         key = parts[1].strip().lower()
         conn = get_pg_connection()
         cur = conn.cursor()
+
+        # Double check if the order exists and belongs to user
         cur.execute("SELECT id FROM orders WHERE order_key = %s AND user_id = %s", (key, user_id))
         order = cur.fetchone()
 
         if order:
             cur.execute("DELETE FROM orders WHERE id = %s", (order[0],))
             conn.commit()
-            send_message(user_id, f"✅ Your order with key *`{key}`* has been *canceled.*")
+            result = f"✅ Your order with key *`{key}`* has been *canceled.*"
         else:
-            send_message(user_id, f"⚠️ Order key *`{key}`* was not *found* or does not *belong* to you.")
+            result = f"⚠️ Order key *`{key}`* was not *found* or does not *belong* to you."
+
         cur.close()
         conn.close()
-        return "ok"
-
-    # Default handling for new order
+        return result
     state = user_states.get(user_id, {})
+    
     if 'step' not in state:
         match = re.search(r'#([A-Za-z0-9_]+)', msg)
         if not match:
             user_states.pop(user_id, None)  # clear any existing state
-            send_message(user_id, (
-                "Sorry, hindi ko po gets 😅\n\n"
-                "✅ Order examples:\n"
-                "*#mynamestore big burger 100*\n"
-                "*#mynamestore big burger 2x100*\n"
-                "*big burger 100x2 #mynamestore*\n"
-                "*#mynamestore red bag 100 x2*\n"
-                "*red bag 100 2x100 #mynamestore*\n\n"
-                "✏️ Edit example: *edit a1b2c3d4*\n"
-                "🗑️ Cancel example: *cancel a1b2c3d4*"
-            ))
-            return "ok"
-
-    # You can continue the new order parsing here...
-    return "ok"
-
+            return (
+            "sorry hindi ko po gets\n"
+            "order example: *#mynamestore big burger 100*\n"
+            "order example: *#mynamestore big burger 2x100*\n"
+            "order example: *big burger 100x2 #mynamestore*\n"
+            "mine example: *#mynamestore red bag 2x100*\n"
+            "mine example: *#mynamestore red bag 100 x2*\n"
+            "mine example: *red bag 100 2x100 #mynamestore*\n"
+            "edit example: *edit a1b2c3d4*\n"
+            "cancel example: *cancel a1b2c3d4*\n"
+            
+            )
 
         seller_tag = match.group(1)
         product_text = re.sub(r'#\w+', '', msg).strip()
@@ -401,7 +355,7 @@ def handle_user_message(user_id, msg):
             return (
                 f"📝 Reusing your previous info:\n"
                 f"👤 {name}\n📍 {address}\n📞 {phone}\n💳 {payment}\n\n"
-                f"✅ Send *yes or no* to confirm this order"
+                f"✅ Send *yes or no* to confirm this order or *no or n* to edit"
             )
         # ✅ Get full name from Facebook API
         full_name = get_user_full_name(user_id, PAGE_ACCESS_TOKEN)
@@ -625,7 +579,7 @@ def save_order(user_id, order):
 
 
 def send_message(recipient_id, message_text):
-    url = "https://graph.facebook.com/v23.0/me/messages"
+    url = "https://graph.facebook.com/v18.0/me/messages"
     headers = {"Content-Type": "application/json"}
     payload = {
         "recipient": {"id": recipient_id},
