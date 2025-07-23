@@ -175,6 +175,17 @@ def webhook():
                 user_message = msg_event["message"]["text"].strip()
                 response = handle_user_message(sender_id, user_message)
                 send_message(sender_id, response)
+            elif "postback" in msg_event:
+                payload = ["postback"].get("payload")
+                referral = msg_event["postback"].get("referral")
+
+                if referral and "ref" in referral:
+                    ref_code = referral["ref"]
+                    # Save it in user state or session
+                    user_states[sender_id] = {"ref_code": ref_code}
+                    send_message(sender_id, f"👋 Welcome! to *{ref_code}*'s shop")
+
+
     return "ok", 200
 
 
@@ -269,10 +280,14 @@ def handle_user_message(user_id, msg):
         conn.close()
         return result
     state = user_states.get(user_id, {})
+    ref_code = state.get("ref_code")
     
     if 'step' not in state:
         match = re.search(r'#([A-Za-z0-9_]+)', msg)
-        if not match:
+        if not match and "ref_code" in state:
+            seller_tag = state["ref_code"]
+        else:
+            seller_tag = match.group(1) if match else None
             user_states.pop(user_id, None)  # clear any existing state
             return (
             "sorry hindi ko po gets\n"
@@ -286,8 +301,7 @@ def handle_user_message(user_id, msg):
             "cancel example: *cancel a1b2c3d4*\n"
             
             )
-
-        seller_tag = match.group(1)
+            
         product_text = re.sub(r'#\w+', '', msg).strip()
 
         # Match formats like: 2x100, 2X₱100.00
