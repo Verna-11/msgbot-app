@@ -176,13 +176,15 @@ def webhook():
                 response = handle_user_message(sender_id, user_message)
                 send_message(sender_id, response)
             elif "postback" in msg_event:
-                payload = ["postback"].get("payload")
+                payload = msg_event["postback"].get("payload")
                 referral = msg_event["postback"].get("referral")
-
+            
                 if referral and "ref" in referral:
                     ref_code = referral["ref"]
-                    # Save it in user state or session
-                    user_states[sender_id] = {"ref_code": ref_code}
+                    if sender_id in user_states:
+                        user_states[sender_id]["ref_code"] = ref_code
+                    else:
+                        user_states[sender_id] = {"ref_code": ref_code}
                     send_message(sender_id, f"👋 Welcome! to *{ref_code}*'s shop")
 
 
