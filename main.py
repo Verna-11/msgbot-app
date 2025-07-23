@@ -172,17 +172,19 @@ def webhook():
         for messaging_event in entry.get('messaging', []):
             sender_id = messaging_event['sender']['id']
 
-            # 1. Handle referral link
+            # 1. Handle referral
             if 'referral' in messaging_event:
-                ref = messaging_event['referral']['ref']  # this is your seller ID
-                return handle_referral(sender_id, ref)
+                ref = messaging_event['referral']['ref']  # seller username
+                handle_referral(sender_id, ref)
+                send_message(sender_id, f"Welcome! You're visiting {ref}'s store 💖")
 
             # 2. Handle normal messages
-            if 'message' in messaging_event:
+            elif 'message' in messaging_event:
                 text = messaging_event['message'].get('text')
-                return handle_message(sender_id, text)
+                handle_message(sender_id, text)
 
     return "ok", 200
+
 
 
 #get name in facebook
@@ -208,16 +210,21 @@ def is_full_name(name):
     return len(name.strip().split()) >= 2
 
 #handle referral
-def handle_referral(sender_id, seller_username):
-    # Optional: store user info, session, etc.
-    greeting = f"Hi there! 👋 Welcome to {seller}'s shop."
-    
-    # Example response using Send API
-    send_message(sender_id, greeting)
-
-    # You can store referral info in DB here for tracking
-
-    return "ok", 200
+def handle_referral(user_id, seller):
+    conn = get_pg_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute('''
+            INSERT INTO referrals (seller, fb_user_id)
+            VALUES (%s, %s)
+            ON CONFLICT (seller, fb_user_id) DO NOTHING
+        ''', (seller, user_id))
+        conn.commit()
+    except Exception as e:
+        print(f"Referral log failed: {e}")
+    finally:
+        cur.close()
+        conn.close()
 
 #handle message
 def handle_user_message(user_id, msg):
