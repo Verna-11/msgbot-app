@@ -601,13 +601,16 @@ def generate_invoice_for_sender(user_id, orders):
     for idx, order in enumerate(orders, start=1):
         order_key, product, quantity, unit_price, price, address, phone, payment, created_at = order
         total += float(price)
+
+        manila_time = created_at.astimezone(ZoneInfo("Asia/Manila"))
+
         invoice_lines.append(
             f"\n📦 {idx}. {product}\n"
             f"🔢 Qty: {quantity} x ₱{unit_price:.2f} = ₱{price:.2f}\n"
             f"🆔 Key: {order_key}\n"
             f"📍 {address}\n"
             f"📞 {phone} | 💳 {payment}\n"
-            f"🕒 {created_at.strftime('%B-%d %H:%M')}"
+            f"🕒 {manila_time.strftime('%B-%d %H:%M')}"
         )
 
     invoice_lines.append(f"\n🧮 *Total Amount: ₱{total:.2f}*")
