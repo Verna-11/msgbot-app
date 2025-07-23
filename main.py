@@ -45,7 +45,7 @@ def register():
 
         # Save to DB
         try:
-            conn = psycopg2.connect("dbname=yourdb user=youruser password=yourpass")
+            conn = get_pg_connection()
             cur = conn.cursor()
 
             # Check if seller or email already exists
