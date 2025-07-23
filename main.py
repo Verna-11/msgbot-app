@@ -284,10 +284,13 @@ def handle_user_message(user_id, msg):
     
     if 'step' not in state:
         match = re.search(r'#([A-Za-z0-9_]+)', msg)
-        if not match and "ref_code" in state:
+        if match:
+            seller_tag = match.group(1)
+
+        elif "ref_code" in state:
             seller_tag = state["ref_code"]
+
         else:
-            seller_tag = match.group(1) if match else None
             user_states.pop(user_id, None)  # clear any existing state
             return (
             "sorry hindi ko po gets\n"
@@ -301,7 +304,7 @@ def handle_user_message(user_id, msg):
             "cancel example: *cancel a1b2c3d4*\n"
             
             )
-            
+
         product_text = re.sub(r'#\w+', '', msg).strip()
 
         # Match formats like: 2x100, 2X₱100.00
