@@ -27,7 +27,6 @@ app.secret_key = os.environ.get("SECRET_KEY")
 user_states = {}
 
 @app.route('/register', methods=['GET', 'POST'])
-@app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
         seller = request.form['seller']
@@ -49,14 +48,14 @@ def register():
             cur = conn.cursor()
 
             # Check if seller or email already exists
-            cur.execute("SELECT * FROM sellers WHERE seller_name = %s OR email = %s", (seller, email))
+            cur.execute("SELECT * FROM sellers WHERE seller = %s OR email = %s", (seller, email))
             existing = cur.fetchone()
             if existing:
                 flash('Seller or email already exists.', 'danger')
                 return render_template('register.html')
 
             # Insert new seller
-            cur.execute("INSERT INTO sellers (seller_name, password, email) VALUES (%s, %s, %s)",
+            cur.execute("INSERT INTO sellers (seller, password, email) VALUES (%s, %s, %s)",
                         (seller, hashed_password, email))
             conn.commit()
             cur.close()
@@ -479,7 +478,7 @@ def handle_user_message(user_id, msg):
                 f"📞 Phone: {order['phone']}\n"
                 f"💳 Payment: {order['payment']}\n\n"
                 f"❌ Cancel: Gusto po i-cancel? Send >> *cancel {order_key}*\n"
-                f"✏️ Edit: May babaguhin po sa product o price? Send >> *edit {order_key}*"
+                f"✏️ Edit: May babaguhin po? Send >> *edit {order_key}*"
             )
         else:
             # Let user change cached details if they said something other than "yes"
