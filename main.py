@@ -155,7 +155,7 @@ def init_pg():
     ''')
 
     cur.execute('''
-        CREATE TABLE referrals (
+        CREATE TABLE IF NOT EXISTS referrals (
             id SERIAL PRIMARY KEY,
             seller TEXT NOT NULL,
             fb_user_id TEXT NOT NULL,
@@ -242,20 +242,23 @@ def handle_referral(user_id, seller):
 
 #handle message
 def handle_user_message(user_id, msg):
+    msg = msg.strip()
+
     if msg.lower().startswith("invoice"):
         orders = get_orders_by_sender(user_id)
         invoice_message = generate_invoice_for_sender(user_id, orders)
         send_message(user_id, invoice_message)
         return "ok"
-    if msg.lower().startswith("edit"):
+
+    elif msg.lower().startswith("edit"):
         parts = msg.split(" ", 1)
         if len(parts) != 2 or not parts[1].strip():
-            return "❌ Please provide a valid order key to edit. Example: *edit abcd1234*"
-    
+            send_message(user_id, "❌ Please provide a valid order key to edit. Example: *edit abcd1234*")
+            return "ok"
+        
         key = parts[1].strip()
         conn = get_pg_connection()
         cur = conn.cursor()
-    
         cur.execute("SELECT product, quantity, unit_price, address, phone, payment FROM orders WHERE order_key = %s AND user_id = %s", (key, user_id))
         order = cur.fetchone()
 
@@ -274,59 +277,61 @@ def handle_user_message(user_id, msg):
                     "payment": payment
                 }
             }
-            cur.close()
-            conn.close()
-            return (
+            send_message(user_id, (
                 f"📝 Editing order `{key}` for '{product}'.\n"
                 f"Current product: {product}, Qty: {quantity}, Unit Price: ₱{unit_price:.2f}\n\n"
                 f"✏️ Please send the new *product name/description*:"
-            )
+            ))
         else:
-            cur.close()
-            conn.close()
-            return f"⚠️ *No order found* with key `{key}` that belongs to you."
+            send_message(user_id, f"⚠️ *No order found* with key `{key}` that belongs to you.")
+        cur.close()
+        conn.close()
+        return "ok"
 
-    if msg.lower().startswith("cancel"):
+    elif msg.lower().startswith("cancel"):
         parts = msg.split(" ", 1)
         if len(parts) != 2 or not parts[1].strip():
-            return "❌ Please provide a valid *order key*. Example: *cancel abcd1234*"
+            send_message(user_id, "❌ Please provide a valid *order key*. Example: *cancel abcd1234*")
+            return "ok"
 
         key = parts[1].strip().lower()
         conn = get_pg_connection()
         cur = conn.cursor()
-
-        # Double check if the order exists and belongs to user
         cur.execute("SELECT id FROM orders WHERE order_key = %s AND user_id = %s", (key, user_id))
         order = cur.fetchone()
 
         if order:
             cur.execute("DELETE FROM orders WHERE id = %s", (order[0],))
             conn.commit()
-            result = f"✅ Your order with key *`{key}`* has been *canceled.*"
+            send_message(user_id, f"✅ Your order with key *`{key}`* has been *canceled.*")
         else:
-            result = f"⚠️ Order key *`{key}`* was not *found* or does not *belong* to you."
-
+            send_message(user_id, f"⚠️ Order key *`{key}`* was not *found* or does not *belong* to you.")
         cur.close()
         conn.close()
-        return result
+        return "ok"
+
+    # Default handling for new order
     state = user_states.get(user_id, {})
-    
     if 'step' not in state:
         match = re.search(r'#([A-Za-z0-9_]+)', msg)
         if not match:
             user_states.pop(user_id, None)  # clear any existing state
-            return (
-            "sorry hindi ko po gets\n"
-            "order example: *#mynamestore big burger 100*\n"
-            "order example: *#mynamestore big burger 2x100*\n"
-            "order example: *big burger 100x2 #mynamestore*\n"
-            "mine example: *#mynamestore red bag 2x100*\n"
-            "mine example: *#mynamestore red bag 100 x2*\n"
-            "mine example: *red bag 100 2x100 #mynamestore*\n"
-            "edit example: *edit a1b2c3d4*\n"
-            "cancel example: *cancel a1b2c3d4*\n"
-            
-            )
+            send_message(user_id, (
+                "Sorry, hindi ko po gets 😅\n\n"
+                "✅ Order examples:\n"
+                "*#mynamestore big burger 100*\n"
+                "*#mynamestore big burger 2x100*\n"
+                "*big burger 100x2 #mynamestore*\n"
+                "*#mynamestore red bag 100 x2*\n"
+                "*red bag 100 2x100 #mynamestore*\n\n"
+                "✏️ Edit example: *edit a1b2c3d4*\n"
+                "🗑️ Cancel example: *cancel a1b2c3d4*"
+            ))
+            return "ok"
+
+    # You can continue the new order parsing here...
+    return "ok"
+
 
         seller_tag = match.group(1)
         product_text = re.sub(r'#\w+', '', msg).strip()
