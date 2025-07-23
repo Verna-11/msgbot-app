@@ -168,13 +168,20 @@ def webhook():
         return "Invalid token"
 
     data = request.get_json()
-    for entry in data.get("entry", []):
-        for msg_event in entry.get("messaging", []):
-            sender_id = msg_event["sender"]["id"]
-            if "message" in msg_event and "text" in msg_event["message"]:
-                user_message = msg_event["message"]["text"].strip()
-                response = handle_user_message(sender_id, user_message)
-                send_message(sender_id, response)
+    for entry in data.get('entry', []):
+        for messaging_event in entry.get('messaging', []):
+            sender_id = messaging_event['sender']['id']
+
+            # 1. Handle referral link
+            if 'referral' in messaging_event:
+                ref = messaging_event['referral']['ref']  # this is your seller ID
+                return handle_referral(sender_id, ref)
+
+            # 2. Handle normal messages
+            if 'message' in messaging_event:
+                text = messaging_event['message'].get('text')
+                return handle_message(sender_id, text)
+
     return "ok", 200
 
 
@@ -200,6 +207,19 @@ def is_full_name(name):
         return False
     return len(name.strip().split()) >= 2
 
+#handle referral
+def handle_referral(sender_id, seller_username):
+    # Optional: store user info, session, etc.
+    greeting = f"Hi there! 👋 Welcome to {seller}'s shop."
+    
+    # Example response using Send API
+    send_message(sender_id, greeting)
+
+    # You can store referral info in DB here for tracking
+
+    return "ok", 200
+
+#handle message
 def handle_user_message(user_id, msg):
     if msg.lower().startswith("invoice"):
         orders = get_orders_by_sender(user_id)
@@ -355,7 +375,7 @@ def handle_user_message(user_id, msg):
             return (
                 f"📝 Reusing your previous info:\n"
                 f"👤 {name}\n📍 {address}\n📞 {phone}\n💳 {payment}\n\n"
-                f"✅ Send *yes or y* to confirm this order or *edit* to update details."
+                f"✅ Send *yes or no* to confirm this order"
             )
         # ✅ Get full name from Facebook API
         full_name = get_user_full_name(user_id, PAGE_ACCESS_TOKEN)
@@ -579,7 +599,7 @@ def save_order(user_id, order):
 
 
 def send_message(recipient_id, message_text):
-    url = "https://graph.facebook.com/v18.0/me/messages"
+    url = "https://graph.facebook.com/v23.0/me/messages"
     headers = {"Content-Type": "application/json"}
     payload = {
         "recipient": {"id": recipient_id},
