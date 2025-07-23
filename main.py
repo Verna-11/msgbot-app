@@ -636,8 +636,7 @@ def get_orders_by_sender(user_id):
 @app.route('/viewer_dashboard')
 def viewer_dashboard():
     # Connect to your database
-    conn = sqlite3.connect('your_database.db')
-    conn.row_factory = sqlite3.Row
+    conn = get_pg_connection()
     cur = conn.cursor()
 
     # Fetch all orders
