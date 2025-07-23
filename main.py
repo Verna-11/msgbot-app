@@ -246,7 +246,7 @@ def handle_user_message(user_id, msg):
         orders = get_orders_by_sender(user_id)
         invoice_message = generate_invoice_for_sender(user_id, orders)
         send_message(user_id, invoice_message)
-        return
+        return "ok"
     if msg.lower().startswith("edit"):
         parts = msg.split(" ", 1)
         if len(parts) != 2 or not parts[1].strip():
