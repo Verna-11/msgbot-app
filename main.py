@@ -181,7 +181,7 @@ def webhook():
             # 2. Handle normal messages
             elif 'message' in messaging_event:
                 text = messaging_event['message'].get('text')
-                handle_message(sender_id, text)
+                handle_user_message(sender_id, text)
 
     return "ok", 200
 
