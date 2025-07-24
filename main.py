@@ -119,7 +119,7 @@ def delete_old_orders():
     conn = get_pg_connection()
     cur = conn.cursor()
     two_days = datetime.utcnow() - timedelta(days=2)
-    cur.execute("DELETE FROM orders WHERE created_at < %s", (tow_days,))
+    cur.execute("DELETE FROM orders WHERE created_at < %s", (two_days,))
     conn.commit()
     cur.close()
     conn.close()
@@ -341,57 +341,28 @@ def handle_user_message(user_id, msg):
     if 'step' not in state:
         match = re.search(r'#([A-Za-z0-9_]+)', msg)
         if match:
+            # 🔁 New store explicitly in message (#store)
             seller_tag = match.group(1)
-            # Save to in-memory state
             user_states[user_id] = user_states.get(user_id, {})
             user_states[user_id]["ref_code"] = seller_tag
+            save_ref_code_to_db(user_id, seller_tag)
         
-            # Save to DB
-            conn = get_pg_connection()
-            cur = conn.cursor()
-        
-            # Check if user already exists
-            cur.execute("SELECT ref_code FROM users WHERE fb_id = %s", (user_id,))
-            row = cur.fetchone()
-
-            if row is None:
-                # First-time user
-                cur.execute("INSERT INTO users (fb_id, ref_code) VALUES (%s, %s)", (user_id, seller_tag))
-            elif not row[0]:
-                # Existing user but no ref_code yet
-                cur.execute("UPDATE users SET ref_code = %s WHERE fb_id = %s", (seller_tag, user_id))
-
-            conn.commit()
-            cur.close()
-            conn.close()
-
-        elif "ref_code" in state:
-            seller_tag = state["ref_code"]
-
         else:
-            # Fallback to DB if no in-memory state
-            conn = get_pg_connection()
-            cur = conn.cursor()
-            cur.execute("SELECT ref_code FROM users WHERE fb_id = %s", (user_id,))
-            row = cur.fetchone()
-            if row and row[0]:
-                seller_tag = row[0]
-                user_states[user_id] = {"ref_code": seller_tag}
-            else:
-                user_states.pop(user_id, None)
-                return (
-                    "sorry hindi ko po gets\n"
-                    "order example: *#mynamestore big burger 100*\n"
-                    "order example: *#mynamestore big burger 2x100*\n"
-                    "order example: *big burger 100x2 #mynamestore*\n"
-                    "mine example: *#mynamestore red bag 2x100*\n"
-                    "mine example: *#mynamestore red bag 100 x2*\n"
-                    "mine example: *red bag 100 2x100 #mynamestore*\n"
-                    "edit example: *edit a1b2c3d4*\n"
-                    "cancel example: *cancel a1b2c3d4*\n"
-                )
-            cur.close()
-            conn.close()
+            # ⚠️ Use referral from state (latest click) or DB if not found
+            seller_tag = state.get("ref_code")
+            if not seller_tag:
+                conn = get_pg_connection()
+                cur = conn.cursor()
+                cur.execute("SELECT ref_code FROM users WHERE fb_id = %s", (user_id,))
+                row = cur.fetchone()
+                cur.close()
+                conn.close()
+                if row and row[0]:
+                    seller_tag = row[0]
+                    user_states[user_id] = {"ref_code": seller_tag}
+                else:
+                    user_states.pop(user_id, None)
+                    return "⚠️ Sorry, I can't determine your store. Please include *#storename* in your message."
 
         product_text = re.sub(r'#\w+', '', msg).strip()
 
@@ -661,8 +632,10 @@ def save_user_profile(user_id, name, address, phone, payment):
 
 def save_order(user_id, order):
     ref_code = order.get("ref_code") or user_states.get(user_id, {}).get("ref_code")
+    order["ref_code"] = ref_code  # ✅ Ensure it's saved in the dict
+
     order_key = generate_order_key()
-    logging.info(f"Saving order for user {user_id} with key {order_key} and ref_code {order.get('ref_code')}")
+    logging.info(f"Saving order for user {user_id} with key {order_key} and ref_code {ref_code}")
 
     conn = get_pg_connection()
     cur = conn.cursor()
@@ -671,7 +644,7 @@ def save_order(user_id, order):
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     ''', (
         user_id,
-        order["seller"], 
+        order["seller"],
         order["product"],
         order["price"],
         order["name"],
@@ -681,12 +654,14 @@ def save_order(user_id, order):
         order["quantity"],
         order["unit_price"],
         order_key,
-        ref_code
+        order["ref_code"]  # ✅ Now guaranteed to exist
     ))
     conn.commit()
     cur.close()
     conn.close()
+    logging.info(f"[Order] {user_id} placed order to #{order['ref_code']} for {order['product']}")
     return order_key
+
 
 
 def send_message(recipient_id, message_text):
@@ -766,6 +741,21 @@ def get_orders_by_sender(user_id):
     return orders
 
 
+def save_ref_code_to_db(user_id, ref_code):
+    try:
+        conn = get_pg_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT ref_code FROM users WHERE fb_id = %s", (user_id,))
+        row = cur.fetchone()
+        if row is None:
+            cur.execute("INSERT INTO users (fb_id, ref_code) VALUES (%s, %s)", (user_id, ref_code))
+        elif not row[0] or row[0] != ref_code:
+            cur.execute("UPDATE users SET ref_code = %s WHERE fb_id = %s", (ref_code, user_id))
+        conn.commit()
+        cur.close()
+        conn.close()
+    except Exception as e:
+        logging.error(f"[DB] Error saving ref_code for {user_id}: {e}")
 
 
 # 📊 Public View 
