@@ -269,10 +269,21 @@ def is_full_name(name):
 
 def handle_user_message(user_id, msg):
     if msg.lower().startswith("invoice"):
-        orders = get_orders_by_sender(user_id)
+        match = re.search(r'#([A-Za-z0-9_]+)', msg)
+        if match:
+            override_ref = match.group(1)
+        else:
+            override_ref = None
+    
+        orders = get_orders_by_sender(user_id, override_ref)
+    
+        if not orders:
+            return "📭 You have no orders for this store."
+    
         invoice_message = generate_invoice_for_sender(user_id, orders)
         send_message(user_id, invoice_message)
         return
+
     if msg.lower().startswith("edit"):
         parts = msg.split(" ", 1)
         if len(parts) != 2 or not parts[1].strip():
@@ -706,29 +717,27 @@ def generate_invoice_for_sender(user_id, orders):
     return "\n".join(invoice_lines)
 
 
-def get_orders_by_sender(user_id):
-    # Try to get from in-memory state first
+def get_orders_by_sender(user_id, override_ref_code=None):
     state = user_states.get(user_id, {})
-    ref_code = state.get("ref_code")
+    ref_code = override_ref_code or state.get("ref_code")
+
+    conn = get_pg_connection()
+    cur = conn.cursor()
 
     if not ref_code:
         # Fallback: fetch from users table
-        conn = get_pg_connection()
-        cur = conn.cursor()
         cur.execute("SELECT ref_code FROM users WHERE fb_id = %s", (user_id,))
         row = cur.fetchone()
-        cur.close()
 
         if row and row[0]:
             ref_code = row[0]
-            # Update in-memory cache for next time
             user_states[user_id] = {"ref_code": ref_code}
         else:
+            cur.close()
             conn.close()
-            return f"You have no order from any store yet"  # Still no store found, return empty list
+            return []
 
-    # Now get the orders for this user + store
-    cur = conn.cursor()
+    # Now get the orders for this user + specific store (ref_code)
     cur.execute("""
         SELECT order_key, product, quantity, unit_price, price, address, phone, payment, created_at
         FROM orders
@@ -736,9 +745,12 @@ def get_orders_by_sender(user_id):
         ORDER BY created_at DESC
     """, (user_id, ref_code))
     orders = cur.fetchall()
+
     cur.close()
     conn.close()
     return orders
+
+
 
 
 def save_ref_code_to_db(user_id, ref_code):
