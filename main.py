@@ -716,39 +716,20 @@ def generate_invoice_for_sender(user_id, orders):
 
     return "\n".join(invoice_lines)
 
-
-def get_orders_by_sender(user_id, override_ref_code=None):
-    state = user_states.get(user_id, {})
-    ref_code = override_ref_code or state.get("ref_code")
-
-    if not ref_code:
-        # 🔁 Fetch from DB only if necessary
-        conn = get_pg_connection()
-        cur = conn.cursor()
-        cur.execute("SELECT ref_code FROM users WHERE fb_id = %s", (user_id,))
-        row = cur.fetchone()
-        cur.close()
-        conn.close()
-
-        if row and row[0]:
-            ref_code = row[0]
-            user_states[user_id] = {"ref_code": ref_code}
-        else:
-            return []  # 🧼 Safe return with no ref_code
-
-    # ✅ Now ref_code is guaranteed, proceed to fetch orders
+def get_orders_by_sender(user_id, seller):
     conn = get_pg_connection()
     cur = conn.cursor()
     cur.execute("""
         SELECT order_key, product, quantity, unit_price, price, address, phone, payment, created_at
         FROM orders
-        WHERE user_id = %s AND ref_code = %s
+        WHERE user_id = %s AND seller = %s
         ORDER BY created_at DESC
-    """, (user_id, ref_code))
+    """, (user_id, seller))
     orders = cur.fetchall()
     cur.close()
     conn.close()
     return orders
+
 
 
 
