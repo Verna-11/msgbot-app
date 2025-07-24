@@ -270,18 +270,28 @@ def is_full_name(name):
 def handle_user_message(user_id, msg):
 
     if msg.lower().startswith("invoice"):
-    # ✅ Extract optional store name like: invoice #storeb
         match = re.search(r'#([A-Za-z0-9_]+)', msg)
-        override_ref = match.group(1) if match else None
-    
-        orders = get_orders_by_sender(user_id, override_ref)
+        if match:
+            override_ref = match.group(1)
+            user_states[user_id] = user_states.get(user_id, {})
+            user_states[user_id]["ref_code"] = override_ref  # ✅ Update state
+        else:
+            # Fallback: Load from DB if ref_code not cached
+            if user_id not in user_states or "ref_code" not in user_states[user_id]:
+                conn = get_pg_connection()
+                cur = conn.cursor()
+                cur.execute("SELECT ref_code FROM users WHERE fb_id = %s", (user_id,))
+                row = cur.fetchone()
+                cur.close()
+                conn.close()
+                if row and row[0]:
+                    user_states[user_id] = {"ref_code": row[0]}
+                else:
+                    return "⚠️ I can't determine your store. Please include *#storename* or click your seller's link."
         
-        if not orders:
-            return "📭 You have no orders for this store."
-    
-        invoice_message = generate_invoice_for_sender(user_id, orders)
-        logging.info(f"Found {len(orders)} orders for user {user_id} with store {override_ref}")
-        return invoice_message  # ✅ Make sure to RETURN it
+        override_ref = user_states[user_id]["ref_code"]
+        orders = get_orders_by_sender(user_id, override_ref)
+
 
 
     if msg.lower().startswith("edit"):
