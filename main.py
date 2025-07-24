@@ -141,7 +141,8 @@ def init_pg():
             quantity INTEGER,
             unit_price NUMERIC,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            order_key TEXT UNIQUE
+            order_key TEXT UNIQUE,
+            ref_code TEXT
 
 
         )
@@ -558,6 +559,7 @@ def handle_user_message(user_id, msg):
 
         user_states.pop(user_id)
         return (
+            f"   Seller: {seller_tag}'shop"
             f"✅ Order `{order_key}` updated successfully!\n"
             f"📦 Product: {order['product']}\n"
             f"🔢 Quantity: {order['quantity']} x ₱{order['unit_price']:.2f}\n"
@@ -572,6 +574,7 @@ def handle_user_message(user_id, msg):
             order_key = save_order(user_id, order)
             user_states.pop(user_id, None)
             return (
+                f"   Seller: {seller_tag}'shop"
                 f"✅ Order confirmed!\n\n"
                 f"🆔 Order Key: {order_key}\n"
                 f"📦 Product: {order['product']}\n"
@@ -661,8 +664,8 @@ def save_order(user_id, order):
     conn = get_pg_connection()
     cur = conn.cursor()
     cur.execute('''
-        INSERT INTO orders (user_id, seller, product, price, name, address, phone, payment,quantity,unit_price, order_key)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+        INSERT INTO orders (user_id, seller, product, price, name, address, phone, payment,quantity,unit_price, order_key, ref_code)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     ''', (
         user_id,
         order["seller"], 
@@ -675,6 +678,7 @@ def save_order(user_id, order):
         order["quantity"],
         order["unit_price"],
         order_key,
+        order["ref_code"]
     ))
     conn.commit()
     cur.close()
@@ -725,18 +729,40 @@ def generate_invoice_for_sender(user_id, orders):
 
 
 def get_orders_by_sender(user_id):
-    conn = get_pg_connection()
+    # Try to get from in-memory state first
+    state = user_states.get(user_id, {})
+    ref_code = state.get("ref_code")
+
+    if not ref_code:
+        # Fallback: fetch from users table
+        conn = get_pg_connection()
+        cur = conn.cursor()
+        cur.execute("SELECT ref_code FROM users WHERE fb_id = %s", (user_id,))
+        row = cur.fetchone()
+        cur.close()
+
+        if row and row[0]:
+            ref_code = row[0]
+            # Update in-memory cache for next time
+            user_states[user_id] = {"ref_code": ref_code}
+        else:
+            conn.close()
+            return f"You have no order from any store yet"  # Still no store found, return empty list
+
+    # Now get the orders for this user + store
     cur = conn.cursor()
     cur.execute("""
         SELECT order_key, product, quantity, unit_price, price, address, phone, payment, created_at
         FROM orders
-        WHERE user_id = %s
+        WHERE user_id = %s AND ref_code = %s
         ORDER BY created_at DESC
-    """, (user_id,))
+    """, (user_id, ref_code))
     orders = cur.fetchall()
     cur.close()
     conn.close()
     return orders
+
+
 
 
 # 📊 Public View 
