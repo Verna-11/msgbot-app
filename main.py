@@ -193,6 +193,7 @@ def webhook():
                 ref_code = event["referral"].get("ref")
                 user_id = event["sender"]["id"]
                 handle_referral(user_id, ref_code)
+                return "ok", 200
 
     for entry in data.get("entry", []):
         for msg_event in entry.get("messaging", []):
