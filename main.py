@@ -272,25 +272,18 @@ def handle_user_message(user_id, msg):
     if msg.lower().startswith("invoice"):
         match = re.search(r'#([A-Za-z0-9_]+)', msg)
         if match:
-            override_ref = match.group(1)
-            user_states[user_id] = user_states.get(user_id, {})
-            user_states[user_id]["ref_code"] = override_ref  # ✅ Update state
+            seller = match.group(1)
         else:
-            # Fallback: Load from DB if ref_code not cached
-            if user_id not in user_states or "ref_code" not in user_states[user_id]:
-                conn = get_pg_connection()
-                cur = conn.cursor()
-                cur.execute("SELECT ref_code FROM users WHERE fb_id = %s", (user_id,))
-                row = cur.fetchone()
-                cur.close()
-                conn.close()
-                if row and row[0]:
-                    user_states[user_id] = {"ref_code": row[0]}
-                else:
-                    return "⚠️ I can't determine your store. Please include *#storename* or click your seller's link."
+            return "⚠️ Please include the store name like `invoice #storeb`."
+    
+        orders = get_orders_by_sender(user_id, seller)
         
-        override_ref = user_states[user_id]["ref_code"]
-        orders = get_orders_by_sender(user_id, override_ref)
+        if not orders:
+            return f"📭 You have no orders for store `#{seller}`."
+    
+        invoice_message = generate_invoice_for_sender(user_id, orders)
+        return invoice_message
+
 
 
 
