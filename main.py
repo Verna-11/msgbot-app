@@ -681,7 +681,7 @@ def save_order(user_id, order):
         order["quantity"],
         order["unit_price"],
         order_key,
-        order["ref_code"]
+        ref_code
     ))
     conn.commit()
     cur.close()
