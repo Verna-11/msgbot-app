@@ -184,34 +184,63 @@ def webhook():
 
     data = request.get_json()
     logging.info(f"Received Data: {data}")
+
     for entry in data.get("entry", []):
         for msg_event in entry.get("messaging", []):
             sender_id = msg_event["sender"]["id"]
+            ref_code = None
 
-            if "message" in msg_event and "text" in msg_event["message"]:
-                user_message = msg_event["message"]["text"].strip()
-                response = handle_user_message(sender_id, user_message)
-                logging.info(f"Message from: {sender_id}: {user_message}")
-                send_message(sender_id, response)
+            # ✅ Check for referral in postback
+            if "postback" in msg_event and "referral" in msg_event["postback"]:
+                referral = msg_event["postback"]["referral"]
+                ref_code = referral.get("ref")
+                logging.info(f"[Postback] Referral code: {ref_code}")
 
-            elif "postback" in msg_event:  # ✅ FIXED: postback (not message_postback)
-                payload = msg_event["postback"].get("payload")
-                referral = msg_event["postback"].get("referral")
-                logging.info(f"is there a payload postback: {payload}, referral: {referral}")
+            # ✅ Check for standalone referral (from m.me link click)
+            elif "referral" in msg_event:
+                referral = msg_event["referral"]
+                ref_code = referral.get("ref")
+                logging.info(f"[Referral] Referral code: {ref_code}")
 
-                if referral and "ref" in referral:
-                    ref_code = referral["ref"]
-                    user_states[sender_id] = {"ref_code": ref_code}
-                    logging.info(f"referral code {ref_code}")
-                    send_message(sender_id, f"👋 Welcome! to *{ref_code}*'s shop")
-
+            # ✅ Check for optin (for checkbox plugin etc)
             elif "optin" in msg_event and "ref" in msg_event["optin"]:
                 ref_code = msg_event["optin"]["ref"]
-                user_states[sender_id] = {"ref_code": ref_code}
-                logging.info(f"Optin Referral: {ref_code}")
+                logging.info(f"[Optin] Referral code: {ref_code}")
+
+            # ✅ Save ref_code if found
+            if ref_code:
+                user_states[sender_id] = user_states.get(sender_id, {})
+                user_states[sender_id]["ref_code"] = ref_code
+
+                # Optional: save to DB
+                try:
+                    conn = get_pg_connection()
+                    cur = conn.cursor()
+                    cur.execute("SELECT ref_code FROM users WHERE fb_id = %s", (sender_id,))
+                    row = cur.fetchone()
+                    if row is None:
+                        cur.execute("INSERT INTO users (fb_id, ref_code) VALUES (%s, %s)", (sender_id, ref_code))
+                    elif not row[0]:
+                        cur.execute("UPDATE users SET ref_code = %s WHERE fb_id = %s", (ref_code, sender_id))
+                    conn.commit()
+                    cur.close()
+                    conn.close()
+                    logging.info(f"Saved ref_code {ref_code} for {sender_id} in DB.")
+                except Exception as e:
+                    logging.error(f"DB Error: {e}")
+
                 send_message(sender_id, f"👋 Welcome! to *{ref_code}*'s shop")
+                continue  # ✅ Skip message if this is just a referral event
+
+            # ✅ Handle regular text messages
+            if "message" in msg_event and "text" in msg_event["message"]:
+                user_message = msg_event["message"]["text"].strip()
+                logging.info(f"[Message] From {sender_id}: {user_message}")
+                response = handle_user_message(sender_id, user_message)
+                send_message(sender_id, response)
 
     return "ok", 200
+
 
 
 
