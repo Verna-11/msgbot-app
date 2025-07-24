@@ -171,26 +171,28 @@ def webhook():
     for entry in data.get("entry", []):
         for msg_event in entry.get("messaging", []):
             sender_id = msg_event["sender"]["id"]
+
             if "message" in msg_event and "text" in msg_event["message"]:
                 user_message = msg_event["message"]["text"].strip()
                 response = handle_user_message(sender_id, user_message)
                 send_message(sender_id, response)
-            elif "message_postback" in msg_event:
-                payload = msg_event["message_postback"].get("payload")
-                referral = msg_event["message_postback"].get("referral")
-            
+
+            elif "postback" in msg_event:  # ✅ FIXED: postback (not message_postback)
+                payload = msg_event["postback"].get("payload")
+                referral = msg_event["postback"].get("referral")
+
                 if referral and "ref" in referral:
                     ref_code = referral["ref"]
                     user_states[sender_id] = {"ref_code": ref_code}
                     send_message(sender_id, f"👋 Welcome! to *{ref_code}*'s shop")
-                    
+
             elif "optin" in msg_event and "ref" in msg_event["optin"]:
                 ref_code = msg_event["optin"]["ref"]
                 user_states[sender_id] = {"ref_code": ref_code}
                 send_message(sender_id, f"👋 Welcome! to *{ref_code}*'s shop")
 
-
     return "ok", 200
+
 
 
 #get name in facebook
