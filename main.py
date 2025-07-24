@@ -541,7 +541,6 @@ def handle_user_message(user_id, msg):
 
         user_states.pop(user_id)
         return (
-            f"   Seller: {seller_tag}'shop"
             f"✅ Order `{order_key}` updated successfully!\n"
             f"📦 Product: {order['product']}\n"
             f"🔢 Quantity: {order['quantity']} x ₱{order['unit_price']:.2f}\n"
@@ -556,7 +555,6 @@ def handle_user_message(user_id, msg):
             order_key = save_order(user_id, order)
             user_states.pop(user_id, None)
             return (
-                f"   Seller: {seller_tag}'shop"
                 f"✅ Order confirmed!\n\n"
                 f"🆔 Order Key: {order_key}\n"
                 f"📦 Product: {order['product']}\n"
