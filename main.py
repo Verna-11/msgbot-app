@@ -186,6 +186,14 @@ def webhook():
     data = request.get_json()
     logging.info(f"Received Data: {data}")
 
+    #finding ref tag
+    for entry in data["entry"]:
+        for event in entry["messaging"]:
+            if "referral" in event:
+                ref_code = event["referral"].get("ref")
+                user_id = event["sender"]["id"]
+                handle_referral(user_id, ref_code)
+
     for entry in data.get("entry", []):
         for msg_event in entry.get("messaging", []):
             sender_id = msg_event["sender"]["id"]
@@ -260,6 +268,49 @@ def get_user_full_name(psid, page_access_token):
     except Exception as e:
         return ("Error fetching user name:", e)
     return None
+#handling referral
+def handle_referral(user_id, ref_code):
+    # Save the store in memory
+    user_states[user_id] = {"ref_code": ref_code.lower()}
+
+    # Optionally confirm
+    text = f"👋 You're now connected to store `#{ref_code}`"
+
+    quick_replies = [
+        {
+            "content_type": "text",
+            "title": "🧾 View My Orders",
+            "payload": "invoice"
+        },
+        {
+            "content_type": "text",
+            "title": "🛒 Place an Order",
+            "payload": "order"
+        },
+        {
+            "content_type": "text",
+            "title": "#switchstore",
+            "payload": "switch"
+        }
+    ]
+
+    send_quick_replies(user_id, text, quick_replies)
+
+#send quick replies.
+def send_quick_replies(user_id, text, quick_replies):
+    message = {
+        "recipient": {"id": user_id},
+        "message": {
+            "text": text,
+            "quick_replies": quick_replies
+        }
+    }
+
+    requests.post(
+        "https://graph.facebook.com/v23.0/me/messages",
+        params={"access_token": PAGE_ACCESS_TOKEN},
+        json=message
+    )
 
 #checking capture name 
 def is_full_name(name):
