@@ -181,11 +181,12 @@ def webhook():
             
                 if referral and "ref" in referral:
                     ref_code = referral["ref"]
-                    if sender_id in user_states:
-                        user_states[sender_id]["ref_code"] = ref_code
-                    else:
-                        user_states[sender_id] = {"ref_code": ref_code}
+                    user_states[sender_id] = {"ref_code": ref_code}
                     send_message(sender_id, f"👋 Welcome! to *{ref_code}*'s shop")
+            elif "optin" in msg_event and "ref" in msg_event["optin"]:
+                ref_code = msg_event["optin"]["ref"]
+                user_states[sender_id] = {"ref_code": ref_code}
+                send_message(sender_id, f"👋 Welcome! to *{ref_code}*'s shop")
 
 
     return "ok", 200
