@@ -161,6 +161,13 @@ def init_pg():
             payment TEXT
         )
     ''')
+    cur.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            fb_id TEXT PRIMARY KEY,
+            ref_code TEXT
+        )
+    ''')
+
     conn.commit()
     cur.close()
     conn.close()
@@ -305,24 +312,56 @@ def handle_user_message(user_id, msg):
         match = re.search(r'#([A-Za-z0-9_]+)', msg)
         if match:
             seller_tag = match.group(1)
+            # Save to in-memory state
+            user_states[user_id] = user_states.get(user_id, {})
+            user_states[user_id]["ref_code"] = seller_tag
+        
+            # Save to DB
+            conn = get_pg_connection()
+            cur = conn.cursor()
+        
+            # Check if user already exists
+            cur.execute("SELECT ref_code FROM users WHERE fb_id = %s", (user_id,))
+            row = cur.fetchone()
+
+            if row is None:
+                # First-time user
+                cur.execute("INSERT INTO users (fb_id, ref_code) VALUES (%s, %s)", (user_id, seller_tag))
+            elif not row[0]:
+                # Existing user but no ref_code yet
+                cur.execute("UPDATE users SET ref_code = %s WHERE fb_id = %s", (seller_tag, user_id))
+
+            conn.commit()
+            cur.close()
+            conn.close()
 
         elif "ref_code" in state:
             seller_tag = state["ref_code"]
 
         else:
-            user_states.pop(user_id, None)  # clear any existing state
-            return (
-            "sorry hindi ko po gets\n"
-            "order example: *#mynamestore big burger 100*\n"
-            "order example: *#mynamestore big burger 2x100*\n"
-            "order example: *big burger 100x2 #mynamestore*\n"
-            "mine example: *#mynamestore red bag 2x100*\n"
-            "mine example: *#mynamestore red bag 100 x2*\n"
-            "mine example: *red bag 100 2x100 #mynamestore*\n"
-            "edit example: *edit a1b2c3d4*\n"
-            "cancel example: *cancel a1b2c3d4*\n"
-            
-            )
+            # Fallback to DB if no in-memory state
+            conn = get_pg_connection()
+            cur = conn.cursor()
+            cur.execute("SELECT ref_code FROM users WHERE fb_id = %s", (user_id,))
+            row = cur.fetchone()
+            if row and row[0]:
+                seller_tag = row[0]
+                user_states[user_id] = {"ref_code": seller_tag}
+            else:
+                user_states.pop(user_id, None)
+                return (
+                    "sorry hindi ko po gets\n"
+                    "order example: *#mynamestore big burger 100*\n"
+                    "order example: *#mynamestore big burger 2x100*\n"
+                    "order example: *big burger 100x2 #mynamestore*\n"
+                    "mine example: *#mynamestore red bag 2x100*\n"
+                    "mine example: *#mynamestore red bag 100 x2*\n"
+                    "mine example: *red bag 100 2x100 #mynamestore*\n"
+                    "edit example: *edit a1b2c3d4*\n"
+                    "cancel example: *cancel a1b2c3d4*\n"
+                )
+            cur.close()
+            conn.close()
 
         product_text = re.sub(r'#\w+', '', msg).strip()
 
@@ -615,7 +654,7 @@ def save_order(user_id, order):
 
 
 def send_message(recipient_id, message_text):
-    url = "https://graph.facebook.com/v18.0/me/messages"
+    url = "https://graph.facebook.com/v23.0/me/messages"
     headers = {"Content-Type": "application/json"}
     payload = {
         "recipient": {"id": recipient_id},
