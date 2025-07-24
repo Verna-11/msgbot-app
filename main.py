@@ -660,11 +660,14 @@ def save_user_profile(user_id, name, address, phone, payment):
     conn.close()
 
 def save_order(user_id, order):
+    ref_code = order.get("ref_code") or user_states.get(user_id, {}).get("ref_code") or state.get("ref_code")
     order_key = generate_order_key()
+    logging.info(f"Saving order for user {user_id} with key {order_key} and ref_code {order.get('ref_code')}")
+
     conn = get_pg_connection()
     cur = conn.cursor()
     cur.execute('''
-        INSERT INTO orders (user_id, seller, product, price, name, address, phone, payment,quantity,unit_price, order_key, ref_code)
+        INSERT INTO orders (user_id, seller, product, price, name, address, phone, payment, quantity, unit_price, order_key, ref_code)
         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
     ''', (
         user_id,
