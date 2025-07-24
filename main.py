@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, request, render_template,session, redirect, url_for, flash
@@ -25,6 +26,13 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 app.secret_key = os.environ.get("SECRET_KEY")
 
 user_states = {}
+
+
+logging.basicConfig(
+    level=logging.INFO, # logging for debugging DEBUG
+    format='[%(asctime)s] %(levelname)s in %(module)s: %(message)s'
+    )
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -168,6 +176,7 @@ def webhook():
         return "Invalid token"
 
     data = request.get_json()
+    logging.info(f"Received Data: {data}")
     for entry in data.get("entry", []):
         for msg_event in entry.get("messaging", []):
             sender_id = msg_event["sender"]["id"]
@@ -175,20 +184,24 @@ def webhook():
             if "message" in msg_event and "text" in msg_event["message"]:
                 user_message = msg_event["message"]["text"].strip()
                 response = handle_user_message(sender_id, user_message)
+                logging.info(f"Message from: {sender_id}: {user_message}")
                 send_message(sender_id, response)
 
             elif "postback" in msg_event:  # ✅ FIXED: postback (not message_postback)
                 payload = msg_event["postback"].get("payload")
                 referral = msg_event["postback"].get("referral")
+                logging.info(f"is there a payload postback: {payload}, referral: {referral}")
 
                 if referral and "ref" in referral:
                     ref_code = referral["ref"]
                     user_states[sender_id] = {"ref_code": ref_code}
+                    logging.info(f"referral code {ref_code}")
                     send_message(sender_id, f"👋 Welcome! to *{ref_code}*'s shop")
 
             elif "optin" in msg_event and "ref" in msg_event["optin"]:
                 ref_code = msg_event["optin"]["ref"]
                 user_states[sender_id] = {"ref_code": ref_code}
+                logging.info(f"Optin Referral: {ref_code}")
                 send_message(sender_id, f"👋 Welcome! to *{ref_code}*'s shop")
 
     return "ok", 200
