@@ -653,7 +653,7 @@ def save_order(user_id, order):
     order["ref_code"] = order["seller"]  # ✅ enforce always
 
     order_key = generate_order_key()
-    logging.info(f"Saving order for user {user_id} with key {order_key} and ref_code {order["ref_code"]}")
+    logging.info(f"Saving order for user {user_id} with key {order_key} and ref_code {order['ref_code']}")
 
     conn = get_pg_connection()
     cur = conn.cursor()
