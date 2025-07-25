@@ -4,33 +4,35 @@
   <title>{{ seller }}'s Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="https://img.icons8.com/emoji/48/000000/robot-emoji.png" type="image/png">
-
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-pink-50 min-h-screen px-4 sm:px-6 py-6 sm:py-10">
   <div class="max-w-7xl mx-auto">
+    <!-- Header Section -->
     <div class="mb-12 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
-  <h1 class="flex items-center gap-2 text-3xl font-bold text-white dark:text-sky-250 rounded-full bg-pink-500 shadow px-4 py-2 hover:bg-white hover:text-pink-500 transition-colors duration-200">
-  <img src="https://img.icons8.com/emoji/24/000000/robot-emoji.png" alt="Bot" class="w-8 h-8" />Welcome {{ seller }}
-  
-</h1>
-  <a href="https://m.me/m1neorder?ref={{seller}}" class="flex items-center gap-2 text-white dark:text-sky-250 rounded-lg bg-pink-500 shadow px-4 py-1 hover:bg-white hover:text-pink-500 transition-colors duration-200">
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" class="w-6 h-6">
-    <path fill="blue" d="M18 0C8.1 0 0 7.6 0 17c0 5.4 2.4 10.3 6.3 13.6V36l5.8-3.2c1.8.5 3.7.8 5.9.8 9.9 0 18-7.6 18-17S27.9 0 18 0zm2.4 22.3l-4.7-5-7.6 5 9.4-10 4.7 5 7.6-5-9.4 10z"/>
-  </svg><strong>m.me/m1neorder?ref={{seller}}</strong> 
-</a>
-  <a href="/logout" class="flex items-center gap-2 text-white dark:text-sky-250 rounded-full bg-pink-500 shadow px-4 py-1 hover:bg-white hover:text-pink-500 transition-colors duration-200">
-  <img src="https://img.icons8.com/emoji/24/000000/robot-emoji.png" alt="Bot" class="w-5 h-5">
-  <strong>Logout</strong>
-</a>
-  </a>
-  </div>
+      <h1 class="flex items-center gap-2 text-3xl font-bold text-white rounded-full bg-pink-500 shadow px-4 py-2 hover:bg-white hover:text-pink-500 transition-colors">
+        <img src="https://img.icons8.com/emoji/24/000000/robot-emoji.png" alt="Bot" class="w-8 h-8" />
+        Welcome {{ seller }}
+      </h1>
+      <a href="https://m.me/m1neorder?ref={{seller}}" class="flex items-center gap-2 text-white rounded-lg bg-pink-500 shadow px-4 py-1 hover:bg-white hover:text-pink-500 transition-colors">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" class="w-6 h-6">
+          <path fill="blue" d="M18 0C8.1 0 0 7.6 0 17c0 5.4 2.4 10.3 6.3 13.6V36l5.8-3.2c1.8.5 3.7.8 5.9.8 9.9 0 18-7.6 18-17S27.9 0 18 0zm2.4 22.3l-4.7-5-7.6 5 9.4-10 4.7 5 7.6-5-9.4 10z"/>
+        </svg>
+        <strong>m.me/m1neorder?ref={{seller}}</strong> 
+      </a>
+      <a href="/logout" class="flex items-center gap-2 text-white rounded-full bg-pink-500 shadow px-4 py-1 hover:bg-white hover:text-pink-500 transition-colors">
+        <img src="https://img.icons8.com/emoji/24/000000/robot-emoji.png" alt="Bot" class="w-5 h-5">
+        <strong>Logout</strong>
+      </a>
+    </div>
 
+    <!-- Search -->
     <div class="mb-6">
-  <input type="text" id="searchInput" placeholder="Look for orders..."
-         class="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500">
-</div>
+      <input type="text" id="searchInput" placeholder="Look for orders..."
+             class="w-full p-3 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-pink-500">
+    </div>
 
+    <!-- Orders Table -->
     <div class="w-full overflow-x-auto bg-pink-200 rounded-lg shadow">
       <table class="min-w-full divide-y divide-gray-200 text-sm" id="ordersTable">
         <thead class="bg-gray-50 text-gray-600">
@@ -65,76 +67,75 @@
           </tr>
           {% endfor %}
         </tbody>
-
       </table>
+
+      <div id="noResults" class="hidden text-center text-gray-500 text-sm mt-4"><strong>No matching orders found.</strong></div>
       <div class="mt-6 flex justify-center items-center gap-2 text-sm text-gray-600" id="pagination"></div>
     </div>
   </div>
+
+  <!-- Script -->
   <script>
-    // Auto-hide flash messages after 3 seconds
-    setTimeout(() => {
-      const flashBox = document.getElementById("flash-messages");
-      if (flashBox) {
-        flashBox.style.opacity = "0";
-        setTimeout(() => flashBox.remove(), 500); // remove after fade out
-      }
-    }, 3000);
-  </script>
-  <script>
-  const rowsPerPage = 10;
-  const tableBody = document.getElementById("ordersTable").getElementsByTagName("tbody")[0];
-  const paginationContainer = document.getElementById("pagination");
-  const input = document.getElementById("searchInput");
-  let currentPage = 1;
-  let filteredRows = [];
+    const rowsPerPage = 10;
+    const tableBody = document.getElementById("ordersTable").getElementsByTagName("tbody")[0];
+    const paginationContainer = document.getElementById("pagination");
+    const input = document.getElementById("searchInput");
+    const noResults = document.getElementById("noResults");
+    let currentPage = 1;
+    let filteredRows = [];
 
-  function filterRows() {
-    const query = input.value.toLowerCase();
-    const allRows = Array.from(tableBody.rows);
-    return allRows.filter(row => row.innerText.toLowerCase().includes(query));
-  }
-
-  function renderTablePage(page) {
-    filteredRows = filterRows();
-    const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
-    const start = (page - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
-
-    Array.from(tableBody.rows).forEach(row => row.style.display = "none"); // Hide all
-    filteredRows.slice(start, end).forEach(row => row.style.display = ""); // Show only current page
-
-    renderPagination(totalPages);
-  }
-
-  function renderPagination(totalPages) {
-    paginationContainer.innerHTML = "";
-    for (let i = 1; i <= totalPages; i++) {
-      const button = document.createElement("button");
-      button.textContent = i;
-      button.className = `px-3 py-1 rounded-full ${
-        i === currentPage ? "bg-pink-500 text-white" : "bg-white text-pink-500 border border-pink-500"
-      } hover:bg-pink-500 hover:text-white transition-colors`;
-      button.addEventListener("click", () => {
-        currentPage = i;
-        renderTablePage(currentPage);
-      });
-      paginationContainer.appendChild(button);
+    function filterRows() {
+      const query = input.value.toLowerCase();
+      const allRows = Array.from(tableBody.rows);
+      return allRows.filter(row => row.innerText.toLowerCase().includes(query));
     }
-  }
 
-  input.addEventListener("keyup", () => {
-    currentPage = 1;
+    function renderTablePage(page) {
+      filteredRows = filterRows();
+      const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+      const start = (page - 1) * rowsPerPage;
+      const end = start + rowsPerPage;
+
+      Array.from(tableBody.rows).forEach(row => row.style.display = "none"); // Hide all
+
+      if (filteredRows.length === 0) {
+        noResults.classList.remove("hidden");
+        paginationContainer.innerHTML = "";
+        return;
+      }
+
+      noResults.classList.add("hidden");
+      filteredRows.slice(start, end).forEach(row => row.style.display = "");
+      renderPagination(totalPages);
+    }
+
+    function renderPagination(totalPages) {
+      paginationContainer.innerHTML = "";
+      for (let i = 1; i <= totalPages; i++) {
+        const button = document.createElement("button");
+        button.textContent = i;
+        button.className = `px-3 py-1 rounded-full ${
+          i === currentPage ? "bg-pink-500 text-white" : "bg-white text-pink-500 border border-pink-500"
+        } hover:bg-pink-500 hover:text-white transition-colors`;
+        button.addEventListener("click", () => {
+          currentPage = i;
+          renderTablePage(currentPage);
+        });
+        paginationContainer.appendChild(button);
+      }
+    }
+
+    input.addEventListener("input", () => {
+      currentPage = 1;
+      renderTablePage(currentPage);
+    });
+
     renderTablePage(currentPage);
-  });
+  </script>
 
-  renderTablePage(currentPage);
-</script>
-
-
-</body>
-<footer class="text-center text-xs text-gray-400 mt-8 space-y-1">
-  <p>Icons by <a href="https://icons8.com" class="underline hover:text-pink-500">Icons8</a></p>
-  <p>Made with heart ❤️ and coffee ☕ by Anrev © 2025</p>
-</footer></html>
+  <footer class="text-center text-xs text-gray-400 mt-8 space-y-1">
+    <p>Icons by <a href="https://icons8.com" class="underline hover:text-pink-500">Icons8</a></p>
+    <p>Made with heart ❤️ and coffee ☕ by Anrev © 2025</p>
+  </footer>
 </body>
 </html>
