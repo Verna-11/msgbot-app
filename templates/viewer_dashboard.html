@@ -63,72 +63,67 @@
     </div>
   </div>
 
-<script>
-  const rowsPerPage = 5;
-  const tableBody = document.getElementById("ordersTable").getElementsByTagName("tbody")[0];
-  const paginationContainer = document.getElementById("pagination");
-  const input = document.getElementById("searchInput");
-  const noResults = document.getElementById("noResults");
+  <script>
+    const rowsPerPage = 10;
+    const tableBody = document.getElementById("ordersTable").getElementsByTagName("tbody")[0];
+    const paginationContainer = document.getElementById("pagination");
+    const input = document.getElementById("searchInput");
+    const noResults = document.getElementById("noResults");
+    let currentPage = 1;
+    let filteredRows = [];
 
-  let currentPage = 1;
-  let filteredRows = [];
+    function filterRows() {
+      const query = input.value.toLowerCase();
+      const allRows = Array.from(tableBody.rows);
+      return allRows.filter(row => row.innerText.toLowerCase().includes(query));
+    }
 
-  function filterRows() {
-    const query = input.value.toLowerCase();
-    const allRows = Array.from(tableBody.rows);
-    return allRows.filter(row => row.innerText.toLowerCase().includes(query));
-  }
+    function renderTablePage(page) {
+      filteredRows = filterRows();
+      const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+      const start = (page - 1) * rowsPerPage;
+      const end = start + rowsPerPage;
 
-  function renderTablePage(page) {
-    filteredRows = filterRows();
-    const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
-    const start = (page - 1) * rowsPerPage;
-    const end = start + rowsPerPage;
+      Array.from(tableBody.rows).forEach(row => row.style.display = "none"); // Hide all
 
-    // Show/hide "No Results"
-    if (filteredRows.length === 0) {
-      noResults.classList.remove("hidden");
-      Array.from(tableBody.rows).forEach(row => row.style.display = "none");
-      paginationContainer.innerHTML = "";
-      return;
-    } else {
+      if (filteredRows.length === 0) {
+        noResults.classList.remove("hidden");
+        paginationContainer.innerHTML = "";
+        return;
+      }
+
       noResults.classList.add("hidden");
+      filteredRows.slice(start, end).forEach(row => row.style.display = "");
+      renderPagination(totalPages);
     }
 
-    // Hide all rows
-    Array.from(tableBody.rows).forEach(row => row.style.display = "none");
-
-    // Show only filtered rows for this page
-    filteredRows.slice(start, end).forEach(row => row.style.display = "");
-
-    renderPagination(totalPages);
-  }
-
-  function renderPagination(totalPages) {
-    paginationContainer.innerHTML = "";
-    for (let i = 1; i <= totalPages; i++) {
-      const button = document.createElement("button");
-      button.textContent = i;
-      button.className = `px-3 py-1 rounded-full ${
-        i === currentPage ? "bg-pink-500 text-white" : "bg-white text-pink-500 border border-pink-500"
-      } hover:bg-pink-500 hover:text-white transition-colors`;
-      button.addEventListener("click", () => {
-        currentPage = i;
-        renderTablePage(currentPage);
-      });
-      paginationContainer.appendChild(button);
+    function renderPagination(totalPages) {
+      paginationContainer.innerHTML = "";
+      for (let i = 1; i <= totalPages; i++) {
+        const button = document.createElement("button");
+        button.textContent = i;
+        button.className = `px-3 py-1 rounded-full ${
+          i === currentPage ? "bg-pink-500 text-white" : "bg-white text-pink-500 border border-pink-500"
+        } hover:bg-pink-500 hover:text-white transition-colors`;
+        button.addEventListener("click", () => {
+          currentPage = i;
+          renderTablePage(currentPage);
+        });
+        paginationContainer.appendChild(button);
+      }
     }
-  }
 
-  input.addEventListener("keyup", () => {
-    currentPage = 1;
+    input.addEventListener("input", () => {
+      currentPage = 1;
+      renderTablePage(currentPage);
+    });
+
     renderTablePage(currentPage);
-  });
+  </script>
 
-  // Initial load
-  renderTablePage(currentPage);
-</script>
-
-
+  <footer class="text-center text-xs text-gray-400 mt-8 space-y-1">
+    <p>Icons by <a href="https://icons8.com" class="underline hover:text-pink-500">Icons8</a></p>
+    <p>Made with heart ❤️ and coffee ☕ by Anrev © 2025</p>
+  </footer>
 </body>
 </html>

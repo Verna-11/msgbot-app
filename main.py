@@ -455,6 +455,9 @@ def handle_user_message(user_id, msg):
         # Format: ₱100 x2 or 100 x2
         match_price_qty = re.search(r'₱?(\d+(\.\d{1,2})?)\s*[xX](\d+)', product_text)
 
+        # Match single price anywhere: e.g., "Gloves 20" or "Pen ₱15.50"
+        match_single_price = re.search(r'₱?(\d+(\.\d{1,2})?)', product_text)
+
         # Format: ₱100 2x or 100 2x
         match_price_qty_reverse = re.search(r'₱?(\d+(\.\d{1,2})?)\s*(\d+)[xX]', product_text)
 
@@ -481,6 +484,12 @@ def handle_user_message(user_id, msg):
             quantity = int(match_price_qty_reverse.group(3))
             total_price = quantity * unit_price
             product = product_text.replace(match_price_qty_reverse.group(0), '').strip()
+        # Match single price anywhere: e.g., "Gloves 20" or "Pen ₱15.50"
+        elif match_single_price:
+            quantity = 1
+            unit_price = float(match_single_price.group(1))
+            total_price = unit_price
+            product = product_text.replace(match_single_price.group(0), '').strip()
 
         else:
             quantity = 1
