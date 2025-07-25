@@ -640,7 +640,7 @@ def handle_user_message(user_id, msg):
                 f"📍 Address: {order['address']}\n"
                 f"📞 Phone: {order['phone']}\n"
                 f"💳 Payment: {order['payment']}\n\n"
-                f"❌ Cancel: Gusto po i-cancel? Send >> *cancel {order_key}*\n"
+                f"Dashboard: > https://anrev.onrender.com/viewer_dashboard\n"
                 f"✏️ Edit: May babaguhin po? Send >> *edit {order_key}*"
             )
         else:
@@ -680,7 +680,7 @@ def handle_user_message(user_id, msg):
             f"📍 Address: {order['address']}\n"
             f"📞 Phone: {order['phone']}\n"
             f"💳 Payment: {order['payment']}\n\n"
-            f"❌ Cancel: Gusto po i-cancel? Send >> *cancel {order_key}*\n"
+            f"Dashboard: > https://anrev.onrender.com/viewer_dashboard\n"
             f"✏️ Edit: May babaguhin po sa product o price? Send >> *edit {order_key}*\n"
         )
     else:
