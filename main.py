@@ -428,64 +428,66 @@ def handle_user_message(user_id, msg):
                     user_states[user_id] = {"ref_code": seller_tag}
                 else:
                     user_states.pop(user_id, None)
-                    return "⚠️ Sorry, I can't determine your store. Please include *#storename* in your message."
+                    return (
+                        f"⚠️ Sorry, I can't determine your store. Please include *#storename* in your message.\n"
+                        f"example #teststore bag 100 \n"
+                        f"example #teststore bag 2x"
+                        )
 
-        clean_msg = msg.strip().lower()
+        clean_msg = re.sub(r'#\w+', '', msg).strip()
 
-        # Check: if message is a price-only, single word, or single character
+        # Reject messages that are unclear (price-only, one word, or one character)
         if (
             re.fullmatch(r'₱?\d+(\.\d{1,2})?', clean_msg)  # Only a number or price
             or len(clean_msg.split()) == 1                 # Only one word
             or len(clean_msg) == 1                         # Only one character
         ):
             return "❌ I didn't understand your order. Please order like: Bag 100 or Bag 100 x2"
-
-        product_text = re.sub(r'#\w+', '', msg).strip()
-
-        # Match formats like: 2x100, 2X₱100.00
-        match_qty_price1 = re.search(r'(\d+)[xX]₱?(\d+(\.\d{1,2})?)', product_text)
         
-        # Match formats like: x2 ₱100 or x2 100
+        product_text = clean_msg
+        
+        # Match formats like: 2x100, 2 x100, 2 x 100, 2x₱100.00
+        match_qty_price1 = re.search(r'(\d+)\s*[xX]\s*₱?(\d+(\.\d{1,2})?)', product_text)
+        
+        # Match formats like: x2 100 or x2 ₱100
         match_qty_price2 = re.search(r'[xX](\d+)\s*₱?(\d+(\.\d{1,2})?)', product_text)
 
-        # Pattern 4: price then quantity, like "300 x4" or "₱300 x4"
+        # Format: ₱100 x2 or 100 x2
         match_price_qty = re.search(r'₱?(\d+(\.\d{1,2})?)\s*[xX](\d+)', product_text)
-        
-        # Format 4: "300 4x" or "₱300 4x"
+
+        # Format: ₱100 2x or 100 2x
         match_price_qty_reverse = re.search(r'₱?(\d+(\.\d{1,2})?)\s*(\d+)[xX]', product_text)
-        # Match single price: 100 or ₱100
-        match_single_price = re.search(r'₱?(\d+(\.\d{1,2})?)', product_text)
-        
+
         if match_qty_price1:
             quantity = int(match_qty_price1.group(1))
             unit_price = float(match_qty_price1.group(2))
             total_price = quantity * unit_price
-            product = re.sub(r'\d+[xX]₱?\d+(\.\d{1,2})?', '', product_text).strip()
+            product = product_text.replace(match_qty_price1.group(0), '').strip()
+
         elif match_qty_price2:
             quantity = int(match_qty_price2.group(1))
             unit_price = float(match_qty_price2.group(2))
             total_price = quantity * unit_price
-            product = re.sub(r'[xX]\d+\s*₱?\d+(\.\d{1,2})?', '', product_text).strip()
+            product = product_text.replace(match_qty_price2.group(0), '').strip()
+
         elif match_price_qty:
             unit_price = float(match_price_qty.group(1))
             quantity = int(match_price_qty.group(3))
             total_price = quantity * unit_price
-            product = re.sub(r'₱?\d+(\.\d{1,2})?\s*[xX]\d+', '', product_text).strip()
+            product = product_text.replace(match_price_qty.group(0), '').strip()
+
         elif match_price_qty_reverse:
             unit_price = float(match_price_qty_reverse.group(1))
             quantity = int(match_price_qty_reverse.group(3))
             total_price = quantity * unit_price
             product = product_text.replace(match_price_qty_reverse.group(0), '').strip()
-        elif match_single_price:
-            quantity = 1
-            unit_price = float(match_single_price.group(1))
-            total_price = unit_price
-            product = re.sub(r'₱?\d+(\.\d{1,2})?', '', product_text).strip()
+
         else:
             quantity = 1
             unit_price = None
             total_price = None
             product = product_text.strip()
+
         #cache name, address, payment, phone
         profile = get_user_profile(user_id)
         if profile:
@@ -507,7 +509,7 @@ def handle_user_message(user_id, msg):
             return (
                 f"📝 Reusing your previous info:\n"
                 f"👤 {name}\n📍 {address}\n📞 {phone}\n💳 {payment}\n\n"
-                f"✅ Send *yes or no* to confirm this order or *no or n* to edit"
+                f"✅ Send *yes or no* to confirm"
             )
         # ✅ Get full name from Facebook API
         full_name = get_user_full_name(user_id, PAGE_ACCESS_TOKEN)

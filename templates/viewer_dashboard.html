@@ -57,33 +57,55 @@
           {% endfor %}
         </tbody>
       </table>
+      <div id="noResults" class="hidden text-center text-gray-500 text-sm mt-4">No matching orders found.</div>
+
       <div class="mt-6 flex justify-center items-center gap-2 text-sm text-gray-600" id="pagination"></div>
     </div>
   </div>
 
- <script>
-  const input = document.getElementById("searchInput");
-  const rowsPerPage = 10;
+<script>
+  const rowsPerPage = 5;
   const tableBody = document.getElementById("ordersTable").getElementsByTagName("tbody")[0];
   const paginationContainer = document.getElementById("pagination");
+  const input = document.getElementById("searchInput");
+  const noResults = document.getElementById("noResults");
+
   let currentPage = 1;
+  let filteredRows = [];
+
+  function filterRows() {
+    const query = input.value.toLowerCase();
+    const allRows = Array.from(tableBody.rows);
+    return allRows.filter(row => row.innerText.toLowerCase().includes(query));
+  }
 
   function renderTablePage(page) {
-    const rows = Array.from(tableBody.rows);
-    const totalPages = Math.ceil(rows.length / rowsPerPage);
+    filteredRows = filterRows();
+    const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
     const start = (page - 1) * rowsPerPage;
     const end = start + rowsPerPage;
 
-    rows.forEach((row, i) => {
-      row.style.display = i >= start && i < end ? "" : "none";
-    });
+    // Show/hide "No Results"
+    if (filteredRows.length === 0) {
+      noResults.classList.remove("hidden");
+      Array.from(tableBody.rows).forEach(row => row.style.display = "none");
+      paginationContainer.innerHTML = "";
+      return;
+    } else {
+      noResults.classList.add("hidden");
+    }
+
+    // Hide all rows
+    Array.from(tableBody.rows).forEach(row => row.style.display = "none");
+
+    // Show only filtered rows for this page
+    filteredRows.slice(start, end).forEach(row => row.style.display = "");
 
     renderPagination(totalPages);
   }
 
   function renderPagination(totalPages) {
     paginationContainer.innerHTML = "";
-
     for (let i = 1; i <= totalPages; i++) {
       const button = document.createElement("button");
       button.textContent = i;
@@ -98,15 +120,15 @@
     }
   }
 
-  // Reapply pagination after search
   input.addEventListener("keyup", () => {
     currentPage = 1;
     renderTablePage(currentPage);
   });
 
-  // Initial render
+  // Initial load
   renderTablePage(currentPage);
 </script>
+
 
 </body>
 </html>
