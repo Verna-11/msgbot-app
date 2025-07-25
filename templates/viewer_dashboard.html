@@ -57,20 +57,56 @@
           {% endfor %}
         </tbody>
       </table>
+      <div class="mt-6 flex justify-center items-center gap-2 text-sm text-gray-600" id="pagination"></div>
     </div>
   </div>
 
-  <script>
-    // Simple search filter
-    const input = document.getElementById("searchInput");
-    const table = document.getElementById("ordersTable").getElementsByTagName("tbody")[0];
-    input.addEventListener("keyup", function () {
-      const filter = input.value.toLowerCase();
-      for (const row of table.rows) {
-        const txt = row.innerText.toLowerCase();
-        row.style.display = txt.includes(filter) ? "" : "none";
-      }
+ <script>
+  const input = document.getElementById("searchInput");
+  const rowsPerPage = 10;
+  const tableBody = document.getElementById("ordersTable").getElementsByTagName("tbody")[0];
+  const paginationContainer = document.getElementById("pagination");
+  let currentPage = 1;
+
+  function renderTablePage(page) {
+    const rows = Array.from(tableBody.rows);
+    const totalPages = Math.ceil(rows.length / rowsPerPage);
+    const start = (page - 1) * rowsPerPage;
+    const end = start + rowsPerPage;
+
+    rows.forEach((row, i) => {
+      row.style.display = i >= start && i < end ? "" : "none";
     });
-  </script>
+
+    renderPagination(totalPages);
+  }
+
+  function renderPagination(totalPages) {
+    paginationContainer.innerHTML = "";
+
+    for (let i = 1; i <= totalPages; i++) {
+      const button = document.createElement("button");
+      button.textContent = i;
+      button.className = `px-3 py-1 rounded-full ${
+        i === currentPage ? "bg-pink-500 text-white" : "bg-white text-pink-500 border border-pink-500"
+      } hover:bg-pink-500 hover:text-white transition-colors`;
+      button.addEventListener("click", () => {
+        currentPage = i;
+        renderTablePage(currentPage);
+      });
+      paginationContainer.appendChild(button);
+    }
+  }
+
+  // Reapply pagination after search
+  input.addEventListener("keyup", () => {
+    currentPage = 1;
+    renderTablePage(currentPage);
+  });
+
+  // Initial render
+  renderTablePage(currentPage);
+</script>
+
 </body>
 </html>
