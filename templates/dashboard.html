@@ -1,18 +1,28 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Live Dashboard</title>
+  <title>{{ seller }}'s Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="https://img.icons8.com/emoji/48/000000/robot-emoji.png" type="image/png">
+
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-pink-50 min-h-screen px-4 sm:px-6 py-6 sm:py-10">
   <div class="max-w-7xl mx-auto">
     <div class="mb-12 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
-  <h1 class="text-2xl font-bold text-[#ffffff] dark:text-sky-250 rounded-full bg-pink-500 shadow px-4 py-2 hover:hover:bg-white hover:text-pink-500 transition-colors duration-200">
-    Welcome ({{ seller }})
-  </h1>
-  <a href="/logout" class="text-white dark:text-sky-250 rounded-lg bg-pink-500 shadow px-4 py-1 hover:bg-white hover:text-pink-500 transition-colors duration-200">
-    <strong>Logout</strong>
+  <h1 class="flex items-center gap-2 text-3xl font-bold text-white dark:text-sky-250 rounded-full bg-pink-500 shadow px-4 py-2 hover:bg-white hover:text-pink-500 transition-colors duration-200">
+  <img src="https://img.icons8.com/emoji/24/000000/robot-emoji.png" alt="Bot" class="w-8 h-8" />Welcome ({{ seller }})
+  
+</h1>
+  <a href="https://m.me/m1neorder?ref={{seller}}" class="flex items-center gap-2 text-white dark:text-sky-250 rounded-lg bg-pink-500 shadow px-4 py-1 hover:bg-white hover:text-pink-500 transition-colors duration-200">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" class="w-6 h-6">
+    <path fill="blue" d="M18 0C8.1 0 0 7.6 0 17c0 5.4 2.4 10.3 6.3 13.6V36l5.8-3.2c1.8.5 3.7.8 5.9.8 9.9 0 18-7.6 18-17S27.9 0 18 0zm2.4 22.3l-4.7-5-7.6 5 9.4-10 4.7 5 7.6-5-9.4 10z"/>
+  </svg><strong>m.me/m1neorder?ref={{seller}}</strong> 
+</a>
+  <a href="/logout" class="flex items-center gap-2 text-white dark:text-sky-250 rounded-full bg-pink-500 shadow px-4 py-1 hover:bg-white hover:text-pink-500 transition-colors duration-200">
+  <img src="https://img.icons8.com/emoji/24/000000/robot-emoji.png" alt="Bot" class="w-5 h-5">
+  <strong>Logout</strong>
+</a>
   </a>
   </div>
 
@@ -83,6 +93,9 @@
     });
   </script>
 </body>
-</html>
+<footer class="text-center text-xs text-gray-400 mt-8 space-y-1">
+  <p>Icons by <a href="https://icons8.com" class="underline hover:text-pink-500">Icons8</a></p>
+  <p>Made with heart ❤️ and coffee ☕ by Anrev © 2025</p>
+</footer></html>
 </body>
 </html>
