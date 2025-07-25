@@ -430,6 +430,16 @@ def handle_user_message(user_id, msg):
                     user_states.pop(user_id, None)
                     return "⚠️ Sorry, I can't determine your store. Please include *#storename* in your message."
 
+        clean_msg = msg.strip().lower()
+
+        # Check: if message is a price-only, single word, or single character
+        if (
+            re.fullmatch(r'₱?\d+(\.\d{1,2})?', clean_msg)  # Only a number or price
+            or len(clean_msg.split()) == 1                 # Only one word
+            or len(clean_msg) == 1                         # Only one character
+        ):
+            return "❌ I didn't understand your order. Please order like: Bag 100 or Bag 100 x2"
+
         product_text = re.sub(r'#\w+', '', msg).strip()
 
         # Match formats like: 2x100, 2X₱100.00
