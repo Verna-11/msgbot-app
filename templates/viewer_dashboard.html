@@ -51,7 +51,7 @@
             <td class="px-4 py-2 font-semibold">₱{{ '%.2f' | format(order['price']|float) }}</td>
             <td class="px-4 py-2 font-arial">{{ order['payment'] }}</td>
             <td class="px-4 py-2 text-sm text-gray-600">
-              {{ order['created_at'].strftime('%B-%d-%Y %H:%M') if order['created_at'] is not string else order['created_at'] }}
+              {{ order['created_at'].strftime('%B-%d %H:%M') if order['created_at'] is not string else order['created_at'] }}
             </td>
           </tr>
           {% endfor %}
@@ -64,7 +64,7 @@
   </div>
 
   <script>
-    const rowsPerPage = 10;
+    const rowsPerPage = 8;
     const tableBody = document.getElementById("ordersTable").getElementsByTagName("tbody")[0];
     const paginationContainer = document.getElementById("pagination");
     const input = document.getElementById("searchInput");

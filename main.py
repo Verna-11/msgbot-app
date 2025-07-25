@@ -118,8 +118,8 @@ def get_pg_connection():
 def delete_old_orders():
     conn = get_pg_connection()
     cur = conn.cursor()
-    two_days = datetime.utcnow() - timedelta(days=2)
-    cur.execute("DELETE FROM orders WHERE created_at < %s", (two_days,))
+    one_day = datetime.utcnow() - timedelta(days=1)
+    cur.execute("DELETE FROM orders WHERE created_at < %s", (one_day,))
     conn.commit()
     cur.close()
     conn.close()
