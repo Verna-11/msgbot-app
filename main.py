@@ -446,14 +446,14 @@ def handle_user_message(user_id, msg):
         
         product_text = clean_msg
         
+        # Format: ₱100 x2 or 100 x2
+        match_price_qty = re.search(r'₱?(\d+(\.\d{1,2})?)\s*[xX](\d+)', product_text)
+        
         # Match formats like: 2x100, 2 x100, 2 x 100, 2x₱100.00
         match_qty_price1 = re.search(r'(\d+)\s*[xX]\s*₱?(\d+(\.\d{1,2})?)', product_text)
         
         # Match formats like: x2 100 or x2 ₱100
         match_qty_price2 = re.search(r'[xX](\d+)\s*₱?(\d+(\.\d{1,2})?)', product_text)
-
-        # Format: ₱100 x2 or 100 x2
-        match_price_qty = re.search(r'₱?(\d+(\.\d{1,2})?)\s*[xX](\d+)', product_text)
 
         # Match single price anywhere: e.g., "Gloves 20" or "Pen ₱15.50"
         match_single_price = re.search(r'₱?(\d+(\.\d{1,2})?)', product_text)
