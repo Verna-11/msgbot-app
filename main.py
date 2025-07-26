@@ -432,6 +432,7 @@ def handle_user_message(user_id, msg):
                         f"⚠️ Sorry, I can't determine your store. Please include *#storename* in your message.\n"
                         f"example #teststore bag 100 \n"
                         f"example #teststore bag 2x"
+                        f"example bag 100 #teststore"
                         )
 
         clean_msg = re.sub(r'#\w+', '', msg).strip()
