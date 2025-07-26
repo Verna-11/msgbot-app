@@ -269,49 +269,7 @@ def get_user_full_name(psid, page_access_token):
     except Exception as e:
         return ("Error fetching user name:", e)
     return None
-#handling referral
-def handle_referral(user_id, ref_code):
-    # Save the store in memory
-    user_states[user_id] = {"ref_code": ref_code.lower()}
 
-    # Optionally confirm
-    text = f"👋 You're now connected to store `#{ref_code}`"
-
-    quick_replies = [
-        {
-            "content_type": "text",
-            "title": "🧾 View My Orders",
-            "payload": "invoice"
-        },
-        {
-            "content_type": "text",
-            "title": "🛒 Place an Order",
-            "payload": "order"
-        },
-        {
-            "content_type": "text",
-            "title": "#switchstore",
-            "payload": "switch"
-        }
-    ]
-
-    send_quick_replies(user_id, text, quick_replies)
-
-#send quick replies.
-def send_quick_replies(user_id, text, quick_replies):
-    message = {
-        "recipient": {"id": user_id},
-        "message": {
-            "text": text,
-            "quick_replies": quick_replies
-        }
-    }
-
-    requests.post(
-        "https://graph.facebook.com/v23.0/me/messages",
-        params={"access_token": PAGE_ACCESS_TOKEN},
-        json=message
-    )
 
 #checking capture name 
 def is_full_name(name):
@@ -462,7 +420,13 @@ def handle_user_message(user_id, msg):
         # Format: ₱100 2x or 100 2x
         match_price_qty_reverse = re.search(r'₱?(\d+(\.\d{1,2})?)\s*(\d+)[xX]', product_text)
 
-        if match_qty_price1:
+        if match_price_qty:
+            unit_price = float(match_price_qty.group(1))
+            quantity = int(match_price_qty.group(3))
+            total_price = quantity * unit_price
+            product = product_text.replace(match_price_qty.group(0), '').strip()
+
+        elif match_qty_price1:
             quantity = int(match_qty_price1.group(1))
             unit_price = float(match_qty_price1.group(2))
             total_price = quantity * unit_price
@@ -474,11 +438,6 @@ def handle_user_message(user_id, msg):
             total_price = quantity * unit_price
             product = product_text.replace(match_qty_price2.group(0), '').strip()
 
-        elif match_price_qty:
-            unit_price = float(match_price_qty.group(1))
-            quantity = int(match_price_qty.group(3))
-            total_price = quantity * unit_price
-            product = product_text.replace(match_price_qty.group(0), '').strip()
 
         elif match_price_qty_reverse:
             unit_price = float(match_price_qty_reverse.group(1))
