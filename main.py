@@ -420,6 +420,7 @@ def handle_user_message(user_id, msg):
         # Format: ₱100 2x or 100 2x
         match_price_qty_reverse = re.search(r'₱?(\d+(\.\d{1,2})?)\s*(\d+)[xX]', product_text)
 
+        
         if match_price_qty:
             unit_price = float(match_price_qty.group(1))
             quantity = int(match_price_qty.group(3))
@@ -708,17 +709,37 @@ def save_order(user_id, order):
 
 
 
+def chunk_text(text, max_len=2000):
+    lines = text.split('\n')
+    chunks = []
+    current = ''
+    for line in lines:
+        # Add line only if it doesn't exceed the limit
+        if len(current) + len(line) + 1 > max_len:
+            chunks.append(current.strip())
+            current = ''
+        current += line + '\n'
+    if current:
+        chunks.append(current.strip())
+    return chunks
+
+
 def send_message(recipient_id, message_text):
     url = "https://graph.facebook.com/v23.0/me/messages"
     headers = {"Content-Type": "application/json"}
-    payload = {
-        "recipient": {"id": recipient_id},
-        "message": {"text": message_text}
-    }
     params = {"access_token": PAGE_ACCESS_TOKEN}
-    res = requests.post(url, headers=headers, params=params, json=payload)
-    if res.status_code != 200:
-        print("Failed to send message:", res.text)
+
+    # Split into safe chunks
+    message_chunks = chunk_text(message_text)
+
+    for chunk in message_chunks:
+        payload = {
+            "recipient": {"id": recipient_id},
+            "message": {"text": chunk}
+        }
+        res = requests.post(url, headers=headers, params=params, json=payload)
+        if res.status_code != 200:
+            print("Failed to send message chunk:", res.text)
 
 #invoice
 def generate_invoice_for_sender(user_id, orders):
@@ -745,7 +766,6 @@ def generate_invoice_for_sender(user_id, orders):
 
     invoice_lines.append(f"\n🧮 *Total Amount: ₱{total:.2f}*")
     invoice_lines.append("✏️ To edit: *edit ORDERKEY*")
-    invoice_lines.append("❌ To cancel: *cancel ORDERKEY*")
 
     return "\n".join(invoice_lines)
 
