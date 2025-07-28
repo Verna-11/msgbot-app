@@ -118,8 +118,8 @@ def get_pg_connection():
 def delete_old_orders():
     conn = get_pg_connection()
     cur = conn.cursor()
-    one_day = datetime.utcnow() - timedelta(days=1)
-    cur.execute("DELETE FROM orders WHERE created_at < %s", (one_day,))
+    ph_time = datetime.now(timezone('Asia/Manila')) - timedelta(days=1)
+    cur.execute("DELETE FROM orders WHERE created_at < %s", (ph_time,))
     conn.commit()
     cur.close()
     conn.close()
@@ -766,6 +766,7 @@ def generate_invoice_for_sender(user_id, orders):
 
     invoice_lines.append(f"\n🧮 *Total Amount: ₱{total:.2f}*")
     invoice_lines.append("✏️ To edit: *edit ORDERKEY*")
+    ivoice.lines.append(f"Dashboard View: anrev.onrender.com")
 
     return "\n".join(invoice_lines)
 
