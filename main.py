@@ -118,7 +118,7 @@ def get_pg_connection():
 def delete_old_orders():
     conn = get_pg_connection()
     cur = conn.cursor()
-    ph_time = datetime.now(timezone('Asia/Manila')) - timedelta(days=1)
+    ph_time = datetime.now(timezone('Asia/Manila')).replace(tzinfo=None) - timedelta(days=1)
     cur.execute("DELETE FROM orders WHERE created_at < %s", (ph_time,))
     conn.commit()
     cur.close()
