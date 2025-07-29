@@ -19,6 +19,10 @@ load_dotenv()
 
 app = Flask(__name__)
 
+scheduler = BackgroundScheduler(timezone=utc)
+scheduler.add_job(delete_old_orders, 'interval', days=1)
+scheduler.start()
+
 PAGE_ACCESS_TOKEN = os.getenv("PAGE_ACCESS_TOKEN")
 VERIFY_TOKEN = os.getenv("VERIFY_TOKEN")
 
@@ -783,7 +787,7 @@ def generate_invoice_for_sender(user_id, orders):
 
     invoice_lines.append(f"\n🧮 *Total Amount: ₱{total:.2f}*")
     invoice_lines.append("✏️ To edit: *edit ORDERKEY*")
-    invoice.lines.append(f"Dashboard View: anrev.onrender.com")
+    invoice_lines.append(f"Dashboard View: anrev.onrender.com")
 
     return "\n".join(invoice_lines)
 
@@ -893,7 +897,3 @@ def dashboard():
 
     
 
-#delete data for 7 days scheduler
-scheduler = BackgroundScheduler()
-scheduler.add_job(delete_old_orders, 'interval', days=1)  # run daily
-scheduler.start()
