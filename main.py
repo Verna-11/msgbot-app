@@ -19,9 +19,6 @@ load_dotenv()
 
 app = Flask(__name__)
 
-scheduler = BackgroundScheduler(timezone=utc)
-scheduler.add_job(delete_old_orders, 'interval', days=1)
-scheduler.start()
 
 PAGE_ACCESS_TOKEN = os.getenv("PAGE_ACCESS_TOKEN")
 VERIFY_TOKEN = os.getenv("VERIFY_TOKEN")
@@ -144,6 +141,9 @@ def start_scheduler_once():
         scheduler.start()
         print("[Scheduler] Started background scheduler")
 
+scheduler = BackgroundScheduler(timezone=utc)
+scheduler.add_job(delete_old_orders, 'interval', days=1)
+scheduler.start()
 #data base connection and commit
 def init_pg():
     conn = get_pg_connection()
