@@ -116,6 +116,70 @@ def test_delete():
     delete_old_orders()
     return "Old orders deleted!"
 
+@app.route('/connect_page')
+def connect_page():
+    fb_app_id = os.getenv("FB_APP_ID")
+    redirect_uri = url_for('fb_callback', _external=True)
+    return redirect(
+        f"https://www.facebook.com/v23.0/dialog/oauth?client_id={fb_app_id}&redirect_uri={redirect_uri}&scope=pages_manage_metadata,pages_messaging,pages_read_engagement,pages_show_list&response_type=code"
+    )
+
+
+@app.route('/fb_callback')
+def fb_callback():
+    fb_app_id = os.getenv("FB_APP_ID")
+    fb_app_secret = os.getenv("FB_APP_SECRET")
+    code = request.args.get("code")
+    redirect_uri = url_for('fb_callback', _external=True)
+
+    if not code:
+        return "Missing authorization code from Facebook", 400
+
+    # Exchange code for short-lived access token
+    token_res = requests.get(
+        "https://graph.facebook.com/v23.0/oauth/access_token",
+        params={
+            "client_id": fb_app_id,
+            "redirect_uri": redirect_uri,
+            "client_secret": fb_app_secret,
+            "code": code
+        }
+    ).json()
+
+    if 'access_token' not in token_res:
+        return f"Failed to get access token: {token_res}", 400
+
+    short_token = token_res['access_token']
+
+    # Exchange for long-lived token
+    long_token_res = requests.get(
+        "https://graph.facebook.com/v23.0/oauth/access_token",
+        params={
+            "grant_type": "fb_exchange_token",
+            "client_id": fb_app_id,
+            "client_secret": fb_app_secret,
+            "fb_exchange_token": short_token
+        }
+    ).json()
+
+    long_token = long_token_res.get("access_token")
+    if not long_token:
+        return f"Failed to get long-lived token: {long_token_res}", 400
+
+    # Fetch user pages
+    pages_res = requests.get(
+        "https://graph.facebook.com/v19.0/me/accounts",
+        params={"access_token": long_token}
+    ).json()
+
+    pages = pages_res.get("data", [])
+
+    # Optional: Save token and page info to DB (you can implement this later)
+    return {
+        "message": "Successfully connected to Facebook.",
+        "long_lived_token": long_token,
+        "pages": pages
+    }
 
 #connecting to postgres
 def get_pg_connection():
