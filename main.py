@@ -118,7 +118,14 @@ def get_pg_connection():
 def delete_old_orders():
     conn = get_pg_connection()
     cur = conn.cursor()
+
+    # Convert to Asia/Manila, remove tzinfo if DB column is not timezone-aware
     ph_time = datetime.now(timezone('Asia/Manila')).replace(tzinfo=None) - timedelta(days=1)
+
+    logging.info("Deleting orders before:", ph_time)
+    cur.execute("SELECT COUNT(*) FROM orders WHERE created_at < %s", (ph_time,))
+    logging.info("Matching rows to delete:", cur.fetchone()[0])
+
     cur.execute("DELETE FROM orders WHERE created_at < %s", (ph_time,))
     conn.commit()
     cur.close()
