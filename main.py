@@ -114,22 +114,25 @@ def logout():
 def get_pg_connection():
     return psycopg2.connect(DATABASE_URL, sslmode="require")
 
-#scheduler deletion of old order in database
+# Define scheduler globally
+scheduler = BackgroundScheduler()
+
 def delete_old_orders():
     conn = get_pg_connection()
     cur = conn.cursor()
-
-    # Convert to Asia/Manila, remove tzinfo if DB column is not timezone-aware
     ph_time = datetime.now(timezone('Asia/Manila')).replace(tzinfo=None) - timedelta(days=1)
-
-    logging.info("Deleting orders before:", ph_time)
-    cur.execute("SELECT COUNT(*) FROM orders WHERE created_at < %s", (ph_time,))
-    logging.info("Matching rows to delete:", cur.fetchone()[0])
-
+    print("[Scheduler] Deleting orders before:", ph_time)
     cur.execute("DELETE FROM orders WHERE created_at < %s", (ph_time,))
     conn.commit()
     cur.close()
     conn.close()
+
+# Start the scheduler
+def start_scheduler_once():
+    if not scheduler.get_jobs():
+        scheduler.add_job(delete_old_orders, 'interval', days=1)
+        scheduler.start()
+        print("[Scheduler] Started background scheduler")
 #data base connection and commit
 def init_pg():
     conn = get_pg_connection()
@@ -182,6 +185,9 @@ def init_pg():
 
 init_pg() #initiating db
 
+@app.before_first_request
+def init_scheduler():
+    start_scheduler_once()
 # ✅ Messenger Webhook
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
@@ -889,7 +895,7 @@ scheduler.add_job(delete_old_orders, 'interval', days=1)  # run daily
 scheduler.start()
 
 # Start the app
-if __name__ == '__main__':
-    delete_old_orders()  # cleanup on startup
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+# if __name__ == '__main__':
+#     delete_old_orders()  # cleanup on startup
+#     port = int(os.environ.get("PORT", 5000))
+#     app.run(host='0.0.0.0', port=port)
