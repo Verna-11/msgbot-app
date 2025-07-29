@@ -13,7 +13,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from psycopg2.errors import UniqueViolation
 
-from pytz import timezone
+from pytz import timezone, utc
 
 load_dotenv()
 
@@ -109,6 +109,12 @@ def logout():
     flash("Logged out.", "info")
     return redirect(url_for('login'))
 
+#test route for deleting orders older than 1 day
+@app.route("/test-delete")
+def test_delete():
+    delete_old_orders()
+    return "Old orders deleted!"
+
 
 #connecting to postgres
 def get_pg_connection():
@@ -120,9 +126,9 @@ scheduler = BackgroundScheduler()
 def delete_old_orders():
     conn = get_pg_connection()
     cur = conn.cursor()
-    ph_time = datetime.now(timezone('Asia/Manila')).replace(tzinfo=None) - timedelta(days=1)
-    print("[Scheduler] Deleting orders before:", ph_time)
-    cur.execute("DELETE FROM orders WHERE created_at < %s", (ph_time,))
+    one_day_ago_utc = datetime.now(utc) - timedelta(days=1)
+    print("[Scheduler] Deleting orders before:", one_day_ago_utc)
+    cur.execute("DELETE FROM orders WHERE created_at < %s", (one_day_ago_utc,))
     conn.commit()
     cur.close()
     conn.close()
@@ -133,6 +139,7 @@ def start_scheduler_once():
         scheduler.add_job(delete_old_orders, 'interval', days=1)
         scheduler.start()
         print("[Scheduler] Started background scheduler")
+
 #data base connection and commit
 def init_pg():
     conn = get_pg_connection()
@@ -185,9 +192,6 @@ def init_pg():
 
 init_pg() #initiating db
 
-@app.before_first_request
-def init_scheduler():
-    start_scheduler_once()
 # ✅ Messenger Webhook
 @app.route('/webhook', methods=['GET', 'POST'])
 def webhook():
@@ -893,9 +897,3 @@ def dashboard():
 scheduler = BackgroundScheduler()
 scheduler.add_job(delete_old_orders, 'interval', days=1)  # run daily
 scheduler.start()
-
-# Start the app
-# if __name__ == '__main__':
-#     delete_old_orders()  # cleanup on startup
-#     port = int(os.environ.get("PORT", 5000))
-#     app.run(host='0.0.0.0', port=port)
