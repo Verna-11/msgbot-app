@@ -196,7 +196,7 @@ def fb_callback():
         "pages": pages
     }
 
-
+#edit button route
 @app.route("/update_order/<order_key>", methods=["POST"])
 def update_order(order_key):
     seller = session.get("seller")
@@ -227,6 +227,25 @@ def update_order(order_key):
 
     flash(f"Order {order_key} updated successfully.", "success")
     return redirect(url_for("dashboard"))
+
+#delete button route
+@app.route("/delete_order/<order_key>", methods=["POST"])
+def delete_order(order_key):
+    seller = session.get("seller")
+    if not seller:
+        flash("You must be logged in to delete orders.", "danger")
+        return redirect(url_for("login"))
+
+    conn = get_pg_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM orders WHERE order_key = %s AND seller = %s", (order_key, seller))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    flash(f"Order {order_key} deleted successfully.", "success")
+    return redirect(url_for("dashboard"))
+
 
 #connecting to postgres
 def get_pg_connection():

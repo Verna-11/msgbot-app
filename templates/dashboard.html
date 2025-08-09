@@ -13,9 +13,6 @@
         Welcome {{ seller }}
       </h1>
       <a href="https://m.me/m1neorder?ref={{seller}}" class="flex items-center gap-2 text-white rounded-lg bg-pink-500 shadow px-4 py-1 hover:bg-white hover:text-pink-500 transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36" class="w-6 h-6">
-          <path fill="blue" d="M18 0C8.1 0 0 7.6 0 17c0 5.4 2.4 10.3 6.3 13.6V36l5.8-3.2c1.8.5 3.7.8 5.9.8 9.9 0 18-7.6 18-17S27.9 0 18 0zm2.4 22.3l-4.7-5-7.6 5 9.4-10 4.7 5 7.6-5-9.4 10z"/>
-        </svg>
         <strong>m.me/m1neorder?ref={{seller}}</strong> 
       </a>
       <a href="/logout" class="flex items-center gap-2 text-white rounded-full bg-pink-500 shadow px-4 py-1 hover:bg-white hover:text-pink-500 transition-colors">
@@ -31,21 +28,21 @@
 
     <!-- Orders Table -->
     <div class="w-full overflow-x-auto bg-pink-200 rounded-lg shadow">
-      <table class="min-w-full divide-y divide-gray-200 text-[14px]" id="ordersTable">
+      <table class="min-w-full divide-y divide-gray-200 text-[15px]" id="ordersTable">
         <thead class="bg-gray-50 text-gray-600">
           <tr>
-            <th class="px-4 py-2 text-left text-sm font-semibold">Order Key</th>
-            <th class="px-4 py-2 text-left text-sm font-semibold">Product</th>
-            <th class="px-4 py-2 text-left text-sm font-semibold">Qty</th>
-            <th class="px-4 py-2 text-left text-sm font-semibold">Unit Price</th>
-            <th class="px-4 py-2 text-left text-sm font-semibold">Total Price</th>
-            <th class="px-4 py-2 text-left text-sm font-semibold">Payment</th>
-            <th class="px-4 py-2 text-left text-sm font-semibold">Name</th>
-            <th class="px-4 py-2 text-left text-sm font-semibold">Address</th>
-            <th class="px-4 py-2 text-left text-sm font-semibold">Phone</th>
-            <th class="px-4 py-2 text-left text-sm font-semibold">Date</th>
+            <th class="px-4 py-2 text-left font-semibold">Order Key</th>
+            <th class="px-4 py-2 text-left font-semibold">Product</th>
+            <th class="px-4 py-2 text-left font-semibold">Qty</th>
+            <th class="px-4 py-2 text-left font-semibold">Unit Price</th>
+            <th class="px-4 py-2 text-left font-semibold">Total Price</th>
+            <th class="px-4 py-2 text-left font-semibold">Payment</th>
+            <th class="px-4 py-2 text-left font-semibold">Name</th>
+            <th class="px-4 py-2 text-left font-semibold">Address</th>
+            <th class="px-4 py-2 text-left font-semibold">Phone</th>
+            <th class="px-4 py-2 text-left font-semibold">Date</th>
             {% if seller %}
-            <th class="px-4 py-2 text-left text-sm font-semibold">Actions</th>
+            <th class="px-4 py-2 text-left font-semibold">Actions</th>
             {% endif %}
           </tr>
         </thead>
@@ -57,7 +54,7 @@
             <td class="px-4 py-2">{{ order['quantity'] }}</td>
             <td class="px-4 py-2">₱{{ '%.2f' | format(order['unit_price']|float) }}</td>
             <td class="px-4 py-2 font-semibold">₱{{ '%.2f' | format(order['price']|float) }}</td>
-            <td class="px-4 py-2 font-arial">{{ order['payment'] }}</td>
+            <td class="px-4 py-2">{{ order['payment'] }}</td>
             <td class="px-4 py-2 font-bold">{{ order['name'] }}</td>
             <td class="px-4 py-2 font-bold">{{ order['address'] }}</td>
             <td class="px-4 py-2 font-bold">{{ order['phone'] }}</td>
@@ -65,7 +62,8 @@
               {{ order['created_at'].strftime('%B-%d %H:%M') if order['created_at'] is not string else order['created_at'] }}
             </td>
             {% if seller %}
-            <td class="px-4 py-2">
+            <td class="px-4 py-2 flex gap-2">
+              <!-- Edit Button -->
               <button onclick="openEditForm('{{ order['order_key'] }}',
                                              '{{ order['product'] }}',
                                              '{{ order['quantity'] }}',
@@ -76,6 +74,13 @@
                       class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
                 Edit
               </button>
+
+              <!-- Delete Button -->
+              <form method="POST" action="/delete_order/{{ order['order_key'] }}" onsubmit="return confirm('Are you sure you want to delete this order?');">
+                <button type="submit" class="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600">
+                  Delete
+                </button>
+              </form>
             </td>
             {% endif %}
           </tr>
@@ -183,7 +188,7 @@
   </script>
 
   <footer class="text-center text-xs text-gray-400 mt-8 space-y-1">
-    <p>Made with heart ❤️ and coffee ☕ by Verna © 2025</p>
+    <p>Made with heart ❤️ and coffee ☕ by Anrev © 2025</p>
   </footer>
 </body>
 </html>
