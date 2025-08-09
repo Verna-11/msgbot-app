@@ -30,7 +30,6 @@
       <table class="min-w-full divide-y divide-gray-200 text-sm" id="ordersTable">
         <thead class="bg-gray-50 text-gray-600">
           <tr>
-            <th class="px-4 py-2 text-left text-sm font-semibold">Order Key</th>
             <th class="px-4 py-2 text-left text-sm font-semibold">Seller</th>
             <th class="px-4 py-2 text-left text-sm font-semibold">Product</th>
             <th class="px-4 py-2 text-left text-sm font-semibold">Qty</th>
@@ -43,8 +42,7 @@
         <tbody class="divide-y divide-gray-100">
           {% for order in orders %}
           <tr class="bg-white even:bg-gray-100 text-black hover:bg-pink-500 hover:text-white transition-colors duration-200">
-            <td class="px-4 py-2 font-mono font-bold text-xs text-pink-500 hover:text-black">{{ order['order_key'] }}</td>
-            <td class="px-4 py-2 font-mono font-bold text-xs text-pink-500 hover:text-black">{{ order['seller'] }}</td>
+            <td class="px-4 py-2 font-mono font-bold text-xs text-pink-500 hover:text-white">{{ order['seller'] }}</td>
             <td class="px-4 py-2">{{ order['product'] }}</td>
             <td class="px-4 py-2">{{ order['quantity'] }}</td>
             <td class="px-4 py-2">₱{{ '%.2f' | format(order['unit_price']|float) }}</td>

@@ -898,7 +898,7 @@ def generate_invoice_for_sender(user_id, orders):
 
     invoice_lines.append(f"\n🧮 *Total Amount: ₱{total:.2f}*")
     invoice_lines.append("✏️ To edit: *edit ORDERKEY*")
-    invoice_lines.append(f"Dashboard View: anrev.onrender.com")
+    invoice_lines.append(f"Dashboard: https://anrev.onrender.com")
 
     return "\n".join(invoice_lines)
 
