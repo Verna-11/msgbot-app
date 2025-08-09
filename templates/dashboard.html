@@ -47,6 +47,9 @@
             <th class="px-4 py-2 text-left text-sm font-semibold">Address</th>
             <th class="px-4 py-2 text-left text-sm font-semibold">Phone</th>
             <th class="px-4 py-2 text-left text-sm font-semibold">Date</th>
+            {% if seller %}
+            <th class="px-4 py-2 text-left text-sm font-semibold">Actions</th>
+            {% endif %}
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
@@ -64,6 +67,20 @@
             <td class="px-4 py-2 text-sm text-gray-600">
               {{ order['created_at'].strftime('%B-%d %H:%M') if order['created_at'] is not string else order['created_at'] }}
             </td>
+            {% if seller %}
+            <td class="px-4 py-2">
+              <button onclick="openEditForm('{{ order['order_key'] }}',
+                                             '{{ order['product'] }}',
+                                             '{{ order['quantity'] }}',
+                                             '{{ order['unit_price'] }}',
+                                             '{{ order['address'] }}',
+                                             '{{ order['phone'] }}',
+                                             '{{ order['payment'] }}')"
+                      class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">
+                Edit
+              </button>
+            </td>
+            {% endif %}
           </tr>
           {% endfor %}
         </tbody>
@@ -72,6 +89,24 @@
       <div id="noResults" class="hidden text-center text-gray-500 text-sm mt-4"><strong>No matching orders found.</strong></div>
       <div class="mt-6 flex justify-center items-center gap-2 text-sm text-gray-600" id="pagination"></div>
     </div>
+  </div>
+
+  <!-- Edit Modal -->
+  <div id="editModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+    <form method="POST" id="editForm" class="bg-white p-6 rounded-lg shadow-lg space-y-3 w-96">
+      <h2 class="text-lg font-bold">Edit Order</h2>
+      <input type="hidden" name="order_key" id="orderKeyInput">
+      <input name="product" id="productInput" class="border p-2 w-full" placeholder="Product">
+      <input name="quantity" id="quantityInput" type="number" class="border p-2 w-full" placeholder="Quantity">
+      <input name="unit_price" id="unitPriceInput" type="number" step="0.01" class="border p-2 w-full" placeholder="Unit Price">
+      <input name="address" id="addressInput" class="border p-2 w-full" placeholder="Address">
+      <input name="phone" id="phoneInput" class="border p-2 w-full" placeholder="Phone">
+      <input name="payment" id="paymentInput" class="border p-2 w-full" placeholder="Payment">
+      <div class="flex justify-end gap-2">
+        <button type="button" onclick="closeEditForm()" class="px-3 py-1 bg-gray-400 text-white rounded">Cancel</button>
+        <button type="submit" class="px-3 py-1 bg-pink-500 text-white rounded">Save</button>
+      </div>
+    </form>
   </div>
 
   <!-- Script -->
@@ -96,7 +131,7 @@
       const start = (page - 1) * rowsPerPage;
       const end = start + rowsPerPage;
 
-      Array.from(tableBody.rows).forEach(row => row.style.display = "none"); // Hide all
+      Array.from(tableBody.rows).forEach(row => row.style.display = "none");
 
       if (filteredRows.length === 0) {
         noResults.classList.remove("hidden");
@@ -131,6 +166,23 @@
     });
 
     renderTablePage(currentPage);
+
+    // Edit Modal Functions
+    function openEditForm(orderKey, product, quantity, unitPrice, address, phone, payment) {
+      document.getElementById('editForm').action = `/update_order/${orderKey}`;
+      document.getElementById('orderKeyInput').value = orderKey;
+      document.getElementById('productInput').value = product;
+      document.getElementById('quantityInput').value = quantity;
+      document.getElementById('unitPriceInput').value = unitPrice;
+      document.getElementById('addressInput').value = address;
+      document.getElementById('phoneInput').value = phone;
+      document.getElementById('paymentInput').value = payment;
+      document.getElementById('editModal').classList.remove('hidden');
+    }
+
+    function closeEditForm() {
+      document.getElementById('editModal').classList.add('hidden');
+    }
   </script>
 
   <footer class="text-center text-xs text-gray-400 mt-8 space-y-1">

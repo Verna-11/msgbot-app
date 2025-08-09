@@ -35,6 +35,20 @@ logging.basicConfig(
     )
 
 
+@app.route("/privacy")
+def privacy():
+    return """
+    <h1>Privacy Policy</h1>
+    <p>This app does not collect personal information beyond what is needed for order processing and communication through Facebook Messenger. We do not share your data with third parties.</p>
+    """
+
+@app.route("/terms")
+def terms():
+    return """
+    <h1>Terms of Service</h1>
+    <p>By using this app, you agree to allow us to manage your order information for the purpose of sales tracking and customer support.</p>
+    """
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
@@ -102,6 +116,7 @@ def login():
         else:
             flash("Invalid credentials.", "danger")
     return render_template('login.html')
+
 
 
 @app.route('/logout')
@@ -180,6 +195,38 @@ def fb_callback():
         "long_lived_token": long_token,
         "pages": pages
     }
+
+
+@app.route("/update_order/<order_key>", methods=["POST"])
+def update_order(order_key):
+    seller = session.get("seller")
+    if not seller:
+        flash("You must be logged in to edit orders.", "danger")
+        return redirect(url_for("login"))
+
+    product = request.form.get("product")
+    quantity = request.form.get("quantity", type=int)
+    unit_price = request.form.get("unit_price", type=float)
+    address = request.form.get("address")
+    phone = request.form.get("phone")
+    payment = request.form.get("payment")
+
+    price = quantity * unit_price if quantity and unit_price else None
+
+    conn = get_pg_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE orders
+        SET product=%s, quantity=%s, unit_price=%s, price=%s,
+            address=%s, phone=%s, payment=%s
+        WHERE order_key=%s AND seller=%s
+    """, (product, quantity, unit_price, price, address, phone, payment, order_key, seller))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    flash(f"Order {order_key} updated successfully.", "success")
+    return redirect(url_for("dashboard"))
 
 #connecting to postgres
 def get_pg_connection():
