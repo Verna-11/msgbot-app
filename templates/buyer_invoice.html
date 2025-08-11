@@ -27,27 +27,30 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
-                    {% set grand_total = 0 %}
+                {% set ns = namespace(total=0) %}
                     {% for order in orders %}
-                        {% set grand_total = grand_total + order[4] %}
-                        <tr class="hover:bg-pink-50">
-                            <td class="px-4 py-2 font-mono text-pink-600">{{ order[0] }}</td>
-                            <td class="px-4 py-2">{{ order[1] }}</td>
-                            <td class="px-4 py-2 text-center">{{ order[2] }}</td>
-                            <td class="px-4 py-2 text-right">₱{{ '%.2f'|format(order[3]|float) }}</td>
-                            <td class="px-4 py-2 text-right font-semibold">₱{{ '%.2f'|format(order[4]|float) }}</td>
-                            <td class="px-4 py-2">{{ order[5] }}</td>
-                            <td class="px-4 py-2">{{ order[6].strftime('%B %d, %Y %H:%M') }}</td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-                <tfoot class="bg-pink-50 font-bold text-gray-700">
-                    <tr>
-                        <td colspan="4" class="px-4 py-2 text-right">Grand Total:</td>
-                        <td class="px-4 py-2 text-right text-pink-600">₱{{ '%.2f'|format(grand_total|float) }}</td>
-                        <td colspan="2"></td>
+                    {% set ns.total = ns.total + order[4] %}
+                    <tr class="hover:bg-pink-50">
+                        <td class="px-4 py-2 font-mono text-pink-600">{{ order[0] }}</td>
+                        <td class="px-4 py-2">{{ order[1] }}</td>
+                        <td class="px-4 py-2 text-center">{{ order[2] }}</td>
+                        <td class="px-4 py-2 text-right">₱{{ '%.2f'|format(order[3]|float) }}</td>
+                        <td class="px-4 py-2 text-right font-semibold">₱{{ '%.2f'|format(order[4]|float) }}</td>
+                        <td class="px-4 py-2">{{ order[5] }}</td>
+                        <td class="px-4 py-2">{{ order[6].strftime('%B %d, %Y %H:%M') }}</td>
                     </tr>
-                </tfoot>
+                {% endfor %}
+            </tbody>
+            <tfoot class="bg-pink-50 font-bold text-gray-700">
+                <tr>
+                    <td colspan="4" class="px-4 py-2 text-right">Grand Total:</td>
+                    <td class="px-4 py-2 text-right text-pink-600">
+                        ₱{{ '%.2f'|format(ns.total|float) }}
+                    </td>
+                    <td colspan="2"></td>
+                </tr>
+            </tfoot>
+
             </table>
         </div>
 
