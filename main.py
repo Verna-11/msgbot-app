@@ -341,8 +341,8 @@ def clear_orders():
 
     flash("✅ All your orders have been cleared.")
     return redirect(url_for("dashboard", seller=seller))
-@app.route("/get_buyer_orders/<buyer_name>")
-def get_buyer_orders(buyer_name):
+@app.route("/buyer/<buyer_name>")
+def buyer_invoice(buyer_name):
     seller = session.get("seller")
     conn = get_pg_connection()
     cur = conn.cursor()
@@ -351,35 +351,16 @@ def get_buyer_orders(buyer_name):
         FROM orders
         WHERE name = %s AND seller = %s
         ORDER BY created_at ASC
-    """, (buyer_name, seller))
-    rows = cur.fetchall()
+    """, (buyer_name, seller_name))
+    orders = cur.fetchall()
     cur.close()
     conn.close()
 
-    orders_list = []
-    for row in rows:
-        order_key = row[0]
-        product = row[1]
-        quantity = row[2]
-        unit_price = float(row[3])
-        price = float(row[4])
-        payment = row[5]
-        created_at = row[6].strftime("%B %d, %Y %H:%M")
+    return render_template("buyer_invoice.html",
+                           buyer=buyer_name,
+                           orders=orders,
+                           seller=seller_name)
 
-        # Clickable product link
-        product_link = f"<a href='/dashboard/product/{order_key}' class='text-blue-500 hover:underline'>{product}</a>"
-
-        orders_list.append({
-            "order_key": order_key,
-            "product": product_link,
-            "quantity": quantity,
-            "unit_price": unit_price,
-            "price": price,
-            "payment": payment,
-            "created_at": created_at
-        })
-
-    return jsonify({"buyer": buyer_name, "orders": orders_list})
 
 
 # --------------------

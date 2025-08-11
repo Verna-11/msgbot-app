@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Invoice - {{ buyer }}</title>
+    <link rel="stylesheet" href="https://cdn.tailwindcss.com">
+</head>
+<body class="bg-gray-50 p-6">
+    <div class="max-w-4xl mx-auto bg-white p-6 shadow rounded">
+        <h1 class="text-2xl font-bold mb-4">Invoice for {{ buyer }}</h1>
+        <p class="mb-4">Seller: {{ seller }}</p>
+
+        <table class="w-full border-collapse border border-gray-300 text-sm">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="border px-2 py-1">Order Key</th>
+                    <th class="border px-2 py-1">Product</th>
+                    <th class="border px-2 py-1">Qty</th>
+                    <th class="border px-2 py-1">Unit Price</th>
+                    <th class="border px-2 py-1">Total</th>
+                    <th class="border px-2 py-1">Payment</th>
+                    <th class="border px-2 py-1">Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in orders %}
+                <tr>
+                    <td class="border px-2 py-1">{{ order[0] }}</td>
+                    <td class="border px-2 py-1">{{ order[1] }}</td>
+                    <td class="border px-2 py-1">{{ order[2] }}</td>
+                    <td class="border px-2 py-1">₱{{ '%.2f'|format(order[3]|float) }}</td>
+                    <td class="border px-2 py-1">₱{{ '%.2f'|format(order[4]|float) }}</td>
+                    <td class="border px-2 py-1">{{ order[5] }}</td>
+                    <td class="border px-2 py-1">{{ order[6].strftime('%B %d, %Y %H:%M') }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="mt-4 flex justify-end">
+            <button onclick="window.print()" 
+                    class="bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600">
+                🖨 Print / Save as PDF
+            </button>
+        </div>
+    </div>
+</body>
+</html>

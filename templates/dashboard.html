@@ -67,10 +67,12 @@
             <td class="px-4 py-2">₱{{ '%.2f' | format(order['unit_price']|float) }}</td>
             <td class="px-4 py-2 font-semibold">₱{{ '%.2f' | format(order['price']|float) }}</td>
             <td class="px-4 py-2">{{ order['payment'] }}</td>
-            <td class="px-4 py-2 font-bold text-blue-600 cursor-pointer hover:underline"
-    onclick="fetchInvoice('{{ order['name'] }}')">
-  {{ order['name'] }}
-</td>          
+            <td class="px-4 py-2 font-bold">
+                <a href="{{ url_for('buyer_invoice', buyer_name=order['name']) }}" 
+                   class="text-blue-500 hover:underline">
+                    {{ order['name'] }}
+                </a>
+            </td>
             <td class="px-4 py-2 font-bold">{{ order['address'] }}</td>
             <td class="px-4 py-2 font-bold">{{ order['phone'] }}</td>
             <td class="px-4 py-2 text-sm text-gray-600">
