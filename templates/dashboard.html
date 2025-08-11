@@ -7,9 +7,6 @@
 </head>
 <body class="bg-pink-50 min-h-screen px-4 sm:px-6 py-6 sm:py-10">
   <div class="max-w-7xl mx-auto">
-    <a href="{{ url_for('download_old_orders') }}" 
-   class="bg-pink-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
-    📥 Download Old Orders</a>
     <!-- Header Section -->
     <div class="mb-12 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
       <h1 class="flex items-center gap-2 text-3xl font-bold text-white rounded-full bg-pink-500 shadow px-4 py-2 hover:bg-white hover:text-pink-500 transition-colors">
@@ -22,10 +19,14 @@
          alt="Messenger" class="w-5 h-5">
     <strong>m.me/m1neorder?ref={{seller}}</strong>
 </a>
-
+      <a href="{{ url_for('download_old_orders') }}" 
+   class="bg-pink-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
+    📥 Download Old Orders</a>
+    
       <a href="/logout" class="flex items-center gap-2 text-white rounded-full bg-pink-500 shadow px-4 py-1 hover:bg-white hover:text-pink-500 transition-colors">
         <strong>Logout</strong>
       </a>
+
     </div>
 
     <!-- Search -->
