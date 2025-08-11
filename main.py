@@ -341,6 +341,38 @@ def clear_orders():
 
     flash("✅ All your orders have been cleared.")
     return redirect(url_for("dashboard", seller=seller))
+@app.route("/get_buyer_orders/<buyer_name>")
+def get_buyer_orders(buyer_name):
+    seller = session.get("seller")
+    if not seller:
+        flash("Not logged in.")
+        return redirect(url_for("login"))
+
+    conn = get_pg_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        SELECT order_key, product, quantity, unit_price, price, payment, created_at
+        FROM orders
+        WHERE name = %s AND seller = %s
+        ORDER BY created_at ASC
+    """, (name, seller))
+    rows = cur.fetchall()
+    cur.close()
+    conn.close()
+
+    orders_list = []
+    for row in rows:
+        orders_list.append({
+            "order_key": row[0],
+            "product": row[1],
+            "quantity": row[2],
+            "unit_price": float(row[3]),
+            "price": float(row[4]),
+            "payment": row[5],
+            "created_at": row[6].strftime("%B %d, %Y %H:%M")
+        })
+
+    return jsonify({"buyer": buyer_name, "orders": orders_list})
 
 # --------------------
 # Scheduler setup

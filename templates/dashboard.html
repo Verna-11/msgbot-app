@@ -68,18 +68,9 @@
             <td class="px-4 py-2 font-semibold">₱{{ '%.2f' | format(order['price']|float) }}</td>
             <td class="px-4 py-2">{{ order['payment'] }}</td>
             <td class="px-4 py-2 font-bold text-blue-600 cursor-pointer hover:underline"
-    onclick="openInvoice('{{ order['order_key'] }}',
-                         '{{ order['name'] }}',
-                         '{{ order['address'] }}',
-                         '{{ order['phone'] }}',
-                         '{{ order['product'] }}',
-                         '{{ order['quantity'] }}',
-                         '{{ order['unit_price'] }}',
-                         '{{ order['price'] }}',
-                         '{{ order['payment'] }}',
-                         '{{ order['created_at'] }}')">
+    onclick="fetchInvoice('{{ order['name'] }}')">
   {{ order['name'] }}
-            </td>           
+</td>          
             <td class="px-4 py-2 font-bold">{{ order['address'] }}</td>
             <td class="px-4 py-2 font-bold">{{ order['phone'] }}</td>
             <td class="px-4 py-2 text-sm text-gray-600">
@@ -236,24 +227,43 @@
     function closeEditForm() {
       document.getElementById('editModal').classList.add('hidden');
     }
-    function openInvoice(orderKey, name, address, phone, product, qty, unitPrice, total, payment, date) {
-  document.getElementById("invoiceContent").innerHTML = `
-    <p><strong>Order Key:</strong> ${orderKey}</p>
-    <p><strong>Name:</strong> ${name}</p>
-    <p><strong>Address:</strong> ${address}</p>
-    <p><strong>Phone:</strong> ${phone}</p>
-    <p><strong>Product:</strong> ${product}</p>
-    <p><strong>Quantity:</strong> ${qty} × ₱${parseFloat(unitPrice).toFixed(2)}</p>
-    <p><strong>Total:</strong> ₱${parseFloat(total).toFixed(2)}</p>
-    <p><strong>Payment:</strong> ${payment}</p>
-    <p><strong>Date:</strong> ${date}</p>
-  `;
-  document.getElementById('invoiceModal').classList.remove('hidden');
+    function fetchInvoice(buyerName) {
+  fetch(`/get_buyer_orders/${encodeURIComponent(buyerName)}`)
+    .then(res => res.json())
+    .then(data => {
+      let html = `<p><strong>Buyer:</strong> ${data.buyer}</p>`;
+      html += `<table class="w-full text-sm border mt-2">
+                <thead>
+                  <tr class="bg-gray-100">
+                    <th class="border px-2 py-1">Product</th>
+                    <th class="border px-2 py-1">Qty</th>
+                    <th class="border px-2 py-1">Unit Price</th>
+                    <th class="border px-2 py-1">Total</th>
+                    <th class="border px-2 py-1">Payment</th>
+                    <th class="border px-2 py-1">Date</th>
+                  </tr>
+                </thead>
+                <tbody>`;
+      data.orders.forEach(o => {
+        html += `<tr>
+                  <td class="border px-2 py-1">${o.product}</td>
+                  <td class="border px-2 py-1">${o.quantity}</td>
+                  <td class="border px-2 py-1">₱${o.unit_price.toFixed(2)}</td>
+                  <td class="border px-2 py-1">₱${o.price.toFixed(2)}</td>
+                  <td class="border px-2 py-1">${o.payment}</td>
+                  <td class="border px-2 py-1">${o.created_at}</td>
+                </tr>`;
+      });
+      html += `</tbody></table>`;
+      document.getElementById("invoiceContent").innerHTML = html;
+      document.getElementById("invoiceModal").classList.remove("hidden");
+    });
 }
 
 function closeInvoice() {
-  document.getElementById('invoiceModal').classList.add('hidden');
+  document.getElementById("invoiceModal").classList.add("hidden");
 }
+
 
   </script>
 
