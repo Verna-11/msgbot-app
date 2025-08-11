@@ -353,9 +353,9 @@ def get_buyer_orders(buyer_name):
     cur.execute("""
         SELECT order_key, product, quantity, unit_price, price, payment, created_at
         FROM orders
-        WHERE name = %s AND seller = %s
+        WHERE buyer_name = %s AND seller = %s
         ORDER BY created_at ASC
-    """, (name, seller))
+    """, (buyer_name, seller))
     rows = cur.fetchall()
     cur.close()
     conn.close()
