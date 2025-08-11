@@ -331,7 +331,6 @@ def download_old_orders():
 # Change your scheduler job to:
 
 scheduler = BackgroundScheduler(timezone=utc)
-scheduler.add_job(delete_old_orders_for_seller, 'interval', days=1)
 scheduler.add_job(delete_old_orders_all_sellers, 'interval', days=1)
 scheduler.start()
 #data base connection and commit
