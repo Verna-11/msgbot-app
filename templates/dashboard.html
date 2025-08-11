@@ -227,45 +227,7 @@
     function closeEditForm() {
       document.getElementById('editModal').classList.add('hidden');
     }
-    function fetchInvoice(buyerName) {
-  fetch(`/get_buyer_orders/${encodeURIComponent(buyerName)}`)
-    .then(res => res.json())
-    .then(data => {
-      let html = `<p><strong>Buyer:</strong> ${data.buyer}</p>`;
-      html += `<table class="w-full text-sm border mt-2">
-                <thead>
-                  <tr class="bg-gray-100">
-                    <th class="border px-2 py-1">Product</th>
-                    <th class="border px-2 py-1">Qty</th>
-                    <th class="border px-2 py-1">Unit Price</th>
-                    <th class="border px-2 py-1">Total</th>
-                    <th class="border px-2 py-1">Payment</th>
-                    <th class="border px-2 py-1">Date</th>
-                  </tr>
-                </thead>
-                <tbody>`;
-      data.orders.forEach(o => {
-        html += `<tr>
-                  <td class="border px-2 py-1">${o.product}</td>
-                  <td class="border px-2 py-1">${o.quantity}</td>
-                  <td class="border px-2 py-1">₱${o.unit_price.toFixed(2)}</td>
-                  <td class="border px-2 py-1">₱${o.price.toFixed(2)}</td>
-                  <td class="border px-2 py-1">${o.payment}</td>
-                  <td class="border px-2 py-1">${o.created_at}</td>
-                </tr>`;
-      });
-      html += `</tbody></table>`;
-      document.getElementById("invoiceContent").innerHTML = html;
-      document.getElementById("invoiceModal").classList.remove("hidden");
-    });
-}
-
-function closeInvoice() {
-  document.getElementById("invoiceModal").classList.add("hidden");
-}
-
-
-  </script>
+</script>
 
 
   <footer class="text-center text-xs text-gray-400 mt-8 space-y-1">
