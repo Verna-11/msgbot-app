@@ -2,43 +2,63 @@
 <html>
 <head>
     <title>Invoice - {{ buyer }}</title>
-    <link rel="stylesheet" href="https://cdn.tailwindcss.com">
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 p-6">
-    <div class="max-w-4xl mx-auto bg-white p-6 shadow rounded">
-        <h1 class="text-2xl font-bold mb-4">Invoice for {{ buyer }}</h1>
-        <p class="mb-4">Seller: {{ seller }}</p>
+    <div class="max-w-4xl mx-auto bg-white p-6 shadow-lg rounded-lg">
+        <!-- Header -->
+        <div class="mb-6 border-b pb-4">
+            <h1 class="text-3xl font-bold text-pink-600">Invoice for {{ buyer }}</h1>
+            <p class="text-gray-500 mt-1">Seller: <span class="font-semibold">{{ seller }}</span></p>
+        </div>
 
-        <table class="w-full border-collapse border border-gray-300 text-sm">
-            <thead class="bg-gray-100">
-                <tr>
-                    <th class="border px-2 py-1">Order Key</th>
-                    <th class="border px-2 py-1">Product</th>
-                    <th class="border px-2 py-1">Qty</th>
-                    <th class="border px-2 py-1">Unit Price</th>
-                    <th class="border px-2 py-1">Total</th>
-                    <th class="border px-2 py-1">Payment</th>
-                    <th class="border px-2 py-1">Date</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for order in orders %}
-                <tr>
-                    <td class="border px-2 py-1">{{ order[0] }}</td>
-                    <td class="border px-2 py-1">{{ order[1] }}</td>
-                    <td class="border px-2 py-1">{{ order[2] }}</td>
-                    <td class="border px-2 py-1">₱{{ '%.2f'|format(order[3]|float) }}</td>
-                    <td class="border px-2 py-1">₱{{ '%.2f'|format(order[4]|float) }}</td>
-                    <td class="border px-2 py-1">{{ order[5] }}</td>
-                    <td class="border px-2 py-1">{{ order[6].strftime('%B %d, %Y %H:%M') }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <!-- Table Card -->
+        <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
+            <table class="min-w-full text-sm text-gray-700">
+                <thead class="bg-pink-100 text-pink-800 uppercase text-xs">
+                    <tr>
+                        <th class="px-4 py-2 text-left">Order Key</th>
+                        <th class="px-4 py-2 text-left">Product</th>
+                        <th class="px-4 py-2 text-center">Qty</th>
+                        <th class="px-4 py-2 text-right">Unit Price</th>
+                        <th class="px-4 py-2 text-right">Total</th>
+                        <th class="px-4 py-2 text-left">Payment</th>
+                        <th class="px-4 py-2 text-left">Date</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% set grand_total = 0 %}
+                    {% for order in orders %}
+                        {% set grand_total = grand_total + order[4] %}
+                        <tr class="hover:bg-pink-50">
+                            <td class="px-4 py-2 font-mono text-pink-600">{{ order[0] }}</td>
+                            <td class="px-4 py-2">{{ order[1] }}</td>
+                            <td class="px-4 py-2 text-center">{{ order[2] }}</td>
+                            <td class="px-4 py-2 text-right">₱{{ '%.2f'|format(order[3]|float) }}</td>
+                            <td class="px-4 py-2 text-right font-semibold">₱{{ '%.2f'|format(order[4]|float) }}</td>
+                            <td class="px-4 py-2">{{ order[5] }}</td>
+                            <td class="px-4 py-2">{{ order[6].strftime('%B %d, %Y %H:%M') }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="bg-pink-50 font-bold text-gray-700">
+                    <tr>
+                        <td colspan="4" class="px-4 py-2 text-right">Grand Total:</td>
+                        <td class="px-4 py-2 text-right text-pink-600">₱{{ '%.2f'|format(grand_total|float) }}</td>
+                        <td colspan="2"></td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
 
-        <div class="mt-4 flex justify-end">
+        <!-- Actions -->
+        <div class="mt-6 flex justify-end gap-3">
+            <a href="/dashboard" 
+               class="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
+                ⬅ Back to Dashboard
+            </a>
             <button onclick="window.print()" 
-                    class="bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600">
+                    class="bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600 shadow">
                 🖨 Print / Save as PDF
             </button>
         </div>
