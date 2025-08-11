@@ -811,8 +811,8 @@ def handle_user_message(user_id, msg):
                 f"📍 Address: {order['address']}\n"
                 f"📞 Phone: {order['phone']}\n"
                 f"💳 Payment: {order['payment']}\n\n"
-                f"Dashboard: https://anrev.onrender.comn"
-                f"Like our page for updates"
+                f"Dashboard: https://anrev.onrender.com\n"
+                f"*Like our page for guides and updates*"
             )
         else:
             # Let user change cached details if they said something other than "yes"
@@ -842,7 +842,7 @@ def handle_user_message(user_id, msg):
         save_user_profile(user_id, order["name"], order["address"], order["phone"], order["payment"])
         user_states.pop(user_id)
         return (
-            f"✅ Order confirmed!\n\n"
+            f"✅ *Order confirmed!*\n\n"
             f"🆔 Order Key: {order_key}\n"
             f"📦 Product: {order['product']}\n"
             f"🔢 Quantity: {order['quantity']} x ₱{order['unit_price']:.2f}\n"
@@ -851,7 +851,7 @@ def handle_user_message(user_id, msg):
             f"📍 Address: {order['address']}\n"
             f"📞 Phone: {order['phone']}\n"
             f"💳 Payment: {order['payment']}\n\n"
-            f"Dashboard: > https://anrev.onrender.com/viewer_dashboard\n"
+            f"Dashboard: > https://anrev.onrender.com\n"
             f"Like our page for updates"
         )
     else:
