@@ -753,7 +753,7 @@ def handle_user_message(user_id, msg):
                 f"📞 Phone: {order['phone']}\n"
                 f"💳 Payment: {order['payment']}\n\n"
                 f"Dashboard: > https://anrev.onrender.com/viewer_dashboard\n"
-                f"✏️ Edit: May babaguhin po? Send >> *edit {order_key}*"
+                f"Like our page for updates"
             )
         else:
             # Let user change cached details if they said something other than "yes"
@@ -793,7 +793,7 @@ def handle_user_message(user_id, msg):
             f"📞 Phone: {order['phone']}\n"
             f"💳 Payment: {order['payment']}\n\n"
             f"Dashboard: > https://anrev.onrender.com/viewer_dashboard\n"
-            f"✏️ Edit: May babaguhin po sa product o price? Send >> *edit {order_key}*\n"
+            f"Like our page for updates"
         )
     else:
         user_states.pop(user_id, None)
@@ -916,8 +916,8 @@ def generate_invoice_for_sender(user_id, orders):
         )
 
     invoice_lines.append(f"\n🧮 *Total Amount: ₱{total:.2f}*")
-    invoice_lines.append("✏️ To edit: *edit ORDERKEY*")
-    invoice_lines.append(f"Dashboard: https://anrev.onrender.com")
+    invoice_lines.append("Dashboard: https://anrev.onrender.com")
+    invoice_lines.append(f"Like our page for updates")
 
     return "\n".join(invoice_lines)
 
