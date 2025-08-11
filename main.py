@@ -322,7 +322,7 @@ def buyer_invoice(buyer_name):
                            seller=seller)
 
 
-#invoice in excel
+#invoice in excel specific buyer
 @app.route("/download_invoice_excel/<buyer>")
 def download_invoice_excel(buyer):
 
@@ -360,6 +360,60 @@ def download_invoice_excel(buyer):
     output.seek(0)
 
     filename = f"Invoice_{buyer}.xlsx"
+    return send_file(output, download_name=filename, as_attachment=True)
+    
+#all buyers excel invoices
+@app.route("/download_all_invoices_excel")
+def download_all_invoices_excel():
+    seller = session.get("seller")
+    if not seller:
+        return "Unauthorized", 401
+
+    conn = get_pg_connection()
+    cur = conn.cursor()
+
+    # Get all distinct buyers for this seller
+    cur.execute("SELECT DISTINCT name FROM orders WHERE seller = %s ORDER BY name", (seller,))
+    buyers = [row[0] for row in cur.fetchall()]
+
+    output = io.BytesIO()
+    workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+
+    for buyer in buyers:
+        # Sheet name max length = 31 chars
+        sheet_name = buyer[:31] if buyer else "Unknown"
+        worksheet = workbook.add_worksheet(sheet_name)
+
+        # Fetch buyer orders
+        cur.execute(
+            """SELECT order_key, product, quantity, unit_price, price, payment, created_at
+               FROM orders
+               WHERE seller = %s AND name = %s
+               ORDER BY created_at""",
+            (seller, buyer)
+        )
+        orders = cur.fetchall()
+
+        headers = ["Order Key", "Product", "Qty", "Unit Price", "Total", "Payment", "Date"]
+        for col, header in enumerate(headers):
+            worksheet.write(0, col, header)
+
+        total = 0
+        for row_num, order in enumerate(orders, start=1):
+            for col_num, value in enumerate(order):
+                if col_num == 6 and hasattr(value, "strftime"):  # Format date
+                    value = value.strftime("%Y-%m-%d %H:%M")
+                worksheet.write(row_num, col_num, str(value))
+            total += float(order[4])
+
+        worksheet.write(len(orders) + 1, 3, "Grand Total")
+        worksheet.write(len(orders) + 1, 4, total)
+
+    conn.close()
+    workbook.close()
+    output.seek(0)
+
+    filename = f"All_Buyers_Invoices_{seller}.xlsx"
     return send_file(output, download_name=filename, as_attachment=True)
 
 # Change your scheduler job to:

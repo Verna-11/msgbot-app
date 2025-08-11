@@ -106,10 +106,10 @@
       </table>
       <!-- Sticky Download Button -->
       <div class="absolute bottom-4 left-4 flex flex-col gap-2">
-        <a href="{{ url_for('download_old_orders') }}" 
-           class="bg-pink-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full shadow-lg">Download Old Orders
-        </a>
-      
+      <a href="{{ url_for('download_all_invoices') }}" 
+         class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-full shadow-lg">
+          📥 Download All Buyers Invoices
+      </a>  
         <form method="POST" action="{{ url_for('clear_orders') }}" 
               onsubmit="return confirm('⚠️ This will permanently delete all your orders. Continue?');">
           <button type="submit" 
