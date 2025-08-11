@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timedelta
+from pytz import timezone, utc
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, request, render_template,session, redirect, url_for, flash, send_file
 import io
@@ -13,7 +14,7 @@ import uuid
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from psycopg2.errors import UniqueViolation
-from pytz import timezone, utc
+
 
 
 load_dotenv()
@@ -316,12 +317,12 @@ def delete_old_orders_for_seller(seller_name):
 # Start the scheduler
 def start_scheduler_once():
     if not scheduler.get_jobs():
-        scheduler.add_job(delete_old_orders, 'interval', days=1)
+        scheduler.add_job(delete_old_orders_for_seller, 'interval', days=1)
         scheduler.start()
         print("[Scheduler] Started background scheduler")
 
 scheduler = BackgroundScheduler(timezone=utc)
-scheduler.add_job(delete_old_orders, 'interval', days=1)
+scheduler.add_job(delete_old_orders_for_seller, 'interval', days=1)
 scheduler.start()
 #data base connection and commit
 def init_pg():
