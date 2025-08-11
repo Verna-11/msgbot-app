@@ -351,7 +351,7 @@ def buyer_invoice(buyer_name):
         FROM orders
         WHERE name = %s AND seller = %s
         ORDER BY created_at ASC
-    """, (buyer_name, seller_name))
+    """, (buyer_name, seller))
     orders = cur.fetchall()
     cur.close()
     conn.close()
