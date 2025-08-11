@@ -5,17 +5,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 p-6">
-    <div class="max-w-4xl mx-auto bg-white p-6 shadow-lg rounded-lg">
-        <!-- Header -->
-        <div class="mb-6 border-b pb-4">
-            <h1 class="text-3xl font-bold text-pink-600">Invoice for {{ buyer }}</h1>
-            <p class="text-gray-500 mt-1">Seller: <span class="font-semibold">{{ seller }}</span></p>
-        </div>
+    <div class="max-w-5xl mx-auto bg-white rounded-lg shadow-lg p-6">
+        <h1 class="text-2xl font-bold mb-2">Invoice for {{ buyer }}</h1>
+        <p class="text-gray-600 mb-6">Seller: <span class="font-semibold">{{ seller }}</span></p>
 
-        <!-- Table Card -->
-        <div class="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
-            <table class="min-w-full text-sm text-gray-700">
-                <thead class="bg-pink-100 text-pink-800 uppercase text-xs">
+        <div class="overflow-x-auto border rounded-lg">
+            <table class="min-w-full divide-y divide-gray-200 text-sm">
+                <thead class="bg-pink-100 text-gray-700">
                     <tr>
                         <th class="px-4 py-2 text-left">Order Key</th>
                         <th class="px-4 py-2 text-left">Product</th>
@@ -27,41 +23,41 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
-                {% set ns = namespace(total=0) %}
+                    {% set ns = namespace(total=0, items=0) %}
                     {% for order in orders %}
-                    {% set ns.total = ns.total + order[4] %}
-                    <tr class="hover:bg-pink-50">
-                        <td class="px-4 py-2 font-mono text-pink-600">{{ order[0] }}</td>
-                        <td class="px-4 py-2">{{ order[1] }}</td>
-                        <td class="px-4 py-2 text-center">{{ order[2] }}</td>
-                        <td class="px-4 py-2 text-right">₱{{ '%.2f'|format(order[3]|float) }}</td>
-                        <td class="px-4 py-2 text-right font-semibold">₱{{ '%.2f'|format(order[4]|float) }}</td>
-                        <td class="px-4 py-2">{{ order[5] }}</td>
-                        <td class="px-4 py-2">{{ order[6].strftime('%B %d, %Y %H:%M') }}</td>
+                        {% set ns.total = ns.total + order[4] %}
+                        {% set ns.items = ns.items + order[2] %}
+                        <tr class="hover:bg-pink-50">
+                            <td class="px-4 py-2 font-mono text-pink-600">{{ order[0] }}</td>
+                            <td class="px-4 py-2">{{ order[1] }}</td>
+                            <td class="px-4 py-2 text-center">{{ order[2] }}</td>
+                            <td class="px-4 py-2 text-right">₱{{ '%.2f'|format(order[3]|float) }}</td>
+                            <td class="px-4 py-2 text-right font-semibold">₱{{ '%.2f'|format(order[4]|float) }}</td>
+                            <td class="px-4 py-2">{{ order[5] }}</td>
+                            <td class="px-4 py-2">{{ order[6].strftime('%B %d, %Y %H:%M') }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="bg-pink-50 font-bold text-gray-700">
+                    <tr>
+                        <td colspan="3" class="px-4 py-2 text-right">Total Items:</td>
+                        <td colspan="1" class="px-4 py-2 text-center">{{ ns.items }}</td>
+                        <td colspan="1" class="px-4 py-2 text-right text-pink-600">
+                            ₱{{ '%.2f'|format(ns.total|float) }}
+                        </td>
+                        <td colspan="2"></td>
                     </tr>
-                {% endfor %}
-            </tbody>
-            <tfoot class="bg-pink-50 font-bold text-gray-700">
-                <tr>
-                    <td colspan="4" class="px-4 py-2 text-right">Grand Total:</td>
-                    <td class="px-4 py-2 text-right text-pink-600">
-                        ₱{{ '%.2f'|format(ns.total|float) }}
-                    </td>
-                    <td colspan="2"></td>
-                </tr>
-            </tfoot>
-
+                </tfoot>
             </table>
         </div>
 
-        <!-- Actions -->
-        <div class="mt-6 flex justify-end gap-3">
-            <a href="/dashboard" 
-               class="bg-gray-200 text-gray-700 px-4 py-2 rounded hover:bg-gray-300">
-                ⬅ Back to Dashboard
-            </a>
+        <div class="mt-6 flex justify-end gap-2">
+            <button onclick="window.history.back()" 
+                    class="bg-gray-400 hover:bg-gray-500 text-white px-4 py-2 rounded">
+                ⬅ Back
+            </button>
             <button onclick="window.print()" 
-                    class="bg-pink-500 text-white px-4 py-2 rounded hover:bg-pink-600 shadow">
+                    class="bg-pink-500 hover:bg-pink-600 text-white px-4 py-2 rounded">
                 🖨 Print / Save as PDF
             </button>
         </div>
