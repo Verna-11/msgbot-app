@@ -105,15 +105,13 @@
       <!-- Sticky Download Button -->
       <div class="absolute bottom-4 left-4 flex flex-col gap-2">
         <a href="{{ url_for('download_old_orders') }}" 
-           class="bg-pink-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full shadow-lg">
-          📥 Download Old Orders
+           class="bg-pink-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-full shadow-lg">Download Old Orders
         </a>
       
         <form method="POST" action="{{ url_for('clear_orders') }}" 
               onsubmit="return confirm('⚠️ This will permanently delete all your orders. Continue?');">
           <button type="submit" 
-                  class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full shadow-lg">
-            🗑️ Clear All Orders
+                  class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-full shadow-lg">Clear All Orders
           </button>
         </form>
       </div>

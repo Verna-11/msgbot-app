@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
-from flask import Flask, request, render_template,session, redirect, url_for, flash, send_file
+from flask import Flask, jsonify, request, render_template,session, redirect, url_for, flash, send_file
 import io
 import pandas as pd
 from werkzeug.security import generate_password_hash, check_password_hash
