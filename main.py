@@ -802,7 +802,7 @@ def handle_user_message(user_id, msg):
             order_key = save_order(user_id, order)
             user_states.pop(user_id, None)
             return (
-                f"✅ Order confirmed!\n\n"
+                f"✅ *Order confirmed!*\n\n"
                 f"🆔 Order Key: {order_key}\n"
                 f"📦 Product: {order['product']}\n"
                 f"🔢 Quantity: {order['quantity']} x ₱{order['unit_price']:.2f}\n"
@@ -811,7 +811,7 @@ def handle_user_message(user_id, msg):
                 f"📍 Address: {order['address']}\n"
                 f"📞 Phone: {order['phone']}\n"
                 f"💳 Payment: {order['payment']}\n\n"
-                f"Dashboard: > https://anrev.onrender.com/viewer_dashboard\n"
+                f"Dashboard: https://anrev.onrender.comn"
                 f"Like our page for updates"
             )
         else:

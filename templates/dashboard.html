@@ -19,10 +19,6 @@
          alt="Messenger" class="w-5 h-5">
     <strong>m.me/m1neorder?ref={{seller}}</strong>
 </a>
-      <a href="{{ url_for('download_old_orders') }}" 
-   class="bg-pink-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">
-    📥 Download Old Orders</a>
-    
       <a href="/logout" class="flex items-center gap-2 text-white rounded-full bg-pink-500 shadow px-4 py-1 hover:bg-white hover:text-pink-500 transition-colors">
         <strong>Logout</strong>
       </a>
@@ -36,7 +32,7 @@
     </div>
 
     <!-- Orders Table -->
-    <div class="w-full overflow-x-auto bg-pink-200 rounded-lg shadow">
+    <div class="w-full overflow-x-auto bg-pink-200 rounded-lg shadow relative pb-16">
       <table class="min-w-full divide-y divide-gray-200 text-[15px]" id="ordersTable">
         <thead class="bg-gray-50 text-gray-600">
           <tr>
@@ -96,9 +92,19 @@
           {% endfor %}
         </tbody>
       </table>
+      <!-- Sticky Download Button -->
+      <div class="absolute bottom-4 left-4">
+        <a href="{{ url_for('download_old_orders') }}" 
+           class="bg-pink-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded shadow-lg">
+          📥 Download Old Orders
+        </a>
+      </div>
 
+      <div class="flex justify-start p-4">
+      </div>
       <div id="noResults" class="hidden text-center text-gray-500 text-sm mt-4"><strong>No matching orders found.</strong></div>
       <div class="mt-6 flex justify-center items-center gap-2 text-sm text-gray-600" id="pagination"></div>
+
     </div>
   </div>
 
