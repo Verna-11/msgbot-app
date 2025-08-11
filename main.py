@@ -803,6 +803,7 @@ def handle_user_message(user_id, msg):
             user_states.pop(user_id, None)
             return (
                 f"✅ *Order confirmed!*\n\n"
+                f"🏪 Store: {order['seller_tag']}\n"
                 f"🆔 Order Key: {order_key}\n"
                 f"📦 Product: {order['product']}\n"
                 f"🔢 Quantity: {order['quantity']} x ₱{order['unit_price']:.2f}\n"
@@ -852,7 +853,7 @@ def handle_user_message(user_id, msg):
             f"📞 Phone: {order['phone']}\n"
             f"💳 Payment: {order['payment']}\n\n"
             f"Dashboard: > https://anrev.onrender.com\n"
-            f"Like our page for updates"
+            f"*Like our page for updates*"
         )
     else:
         user_states.pop(user_id, None)
@@ -976,7 +977,7 @@ def generate_invoice_for_sender(user_id, orders):
 
     invoice_lines.append(f"\n🧮 *Total Amount: ₱{total:.2f}*")
     invoice_lines.append("Dashboard: https://anrev.onrender.com")
-    invoice_lines.append(f"Like our page for updates")
+    invoice_lines.append(f"*Like our page for updates*")
 
     return "\n".join(invoice_lines)
 
