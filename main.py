@@ -7,13 +7,13 @@ import requests
 import re
 import os
 from dotenv import load_dotenv
-
 import uuid
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from psycopg2.errors import UniqueViolation
-
 from pytz import timezone, utc
+import excel
+
 
 load_dotenv()
 
@@ -128,8 +128,11 @@ def logout():
 #test route for deleting orders older than 1 day
 @app.route("/test-delete")
 def test_delete():
-    delete_old_orders()
-    return "Old orders deleted!"
+    seller = session.get("seller")
+    if not seller:
+        return "You must be logged in as a seller", 403
+    count = delete_old_orders_for_seller(seller)
+    return f"Deleted {count} old orders for seller {seller}"
 
 @app.route('/connect_page')
 def connect_page():
@@ -254,15 +257,19 @@ def get_pg_connection():
 # Define scheduler globally
 scheduler = BackgroundScheduler()
 
-def delete_old_orders():
+def delete_old_orders_for_seller(seller_name):
     conn = get_pg_connection()
     cur = conn.cursor()
     one_day_ago_utc = datetime.now(utc) - timedelta(days=1)
-    print("[Scheduler] Deleting orders before:", one_day_ago_utc)
-    cur.execute("DELETE FROM orders WHERE created_at < %s", (one_day_ago_utc,))
+    print(f"[Scheduler] Deleting orders before: {one_day_ago_utc} for seller: {seller_name}")
+    cur.execute(
+        "DELETE FROM orders WHERE created_at < %s AND seller = %s",
+        (one_day_ago_utc, seller_name)
+    )
     conn.commit()
     cur.close()
     conn.close()
+
 
 # Start the scheduler
 def start_scheduler_once():
