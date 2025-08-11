@@ -803,7 +803,7 @@ def handle_user_message(user_id, msg):
             user_states.pop(user_id, None)
             return (
                 f"✅ *Order confirmed!*\n\n"
-                f"🏪 Store: {order['seller_tag']}\n"
+                f"   Store: {order['seller']}\n"
                 f"🆔 Order Key: {order_key}\n"
                 f"📦 Product: {order['product']}\n"
                 f"🔢 Quantity: {order['quantity']} x ₱{order['unit_price']:.2f}\n"
@@ -844,6 +844,7 @@ def handle_user_message(user_id, msg):
         user_states.pop(user_id)
         return (
             f"✅ *Order confirmed!*\n\n"
+            f"   Store: {order['seller']}\n"
             f"🆔 Order Key: {order_key}\n"
             f"📦 Product: {order['product']}\n"
             f"🔢 Quantity: {order['quantity']} x ₱{order['unit_price']:.2f}\n"
@@ -996,10 +997,6 @@ def get_orders_by_sender(user_id, seller):
     return orders
 
 
-
-
-
-
 def save_ref_code_to_db(user_id, ref_code):
     try:
         conn = get_pg_connection()
@@ -1015,7 +1012,6 @@ def save_ref_code_to_db(user_id, ref_code):
         conn.close()
     except Exception as e:
         logging.error(f"[DB] Error saving ref_code for {user_id}: {e}")
-
 
 # 📊 Public View 
 @app.route('/viewer_dashboard')
