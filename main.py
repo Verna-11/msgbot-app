@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime, timedelta
-from pytz import timezone, utc
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, request, render_template,session, redirect, url_for, flash, send_file
 import io
@@ -14,6 +13,7 @@ import uuid
 import psycopg2
 from psycopg2.extras import RealDictCursor
 from psycopg2.errors import UniqueViolation
+from pytz import timezone, utc
 
 
 
@@ -128,13 +128,7 @@ def logout():
     return redirect(url_for('login'))
 
 #test route for deleting orders older than 1 day
-@app.route("/test-delete")
-def test_delete():
-    seller = session.get("seller")
-    if not seller:
-        return "You must be logged in as a seller", 403
-    count = delete_old_orders_for_seller(seller)
-    return f"Deleted {count} old orders for seller {seller}"
+
 
 @app.route('/connect_page')
 def connect_page():
@@ -233,32 +227,68 @@ def update_order(order_key):
     flash(f"Order {order_key} updated successfully.", "success")
     return redirect(url_for("dashboard"))
 
-#delete button route
-@app.route("/delete_order/<order_key>", methods=["POST"])
-def delete_order(order_key):
-    seller = session.get("seller")
-    if not seller:
-        flash("You must be logged in to delete orders.", "danger")
-        return redirect(url_for("login"))
+#connecting to postgres
+def get_pg_connection():
+    return psycopg2.connect(DATABASE_URL, sslmode="require")
 
+# Define scheduler globally
+scheduler = BackgroundScheduler()
+# Delete old orders for a specific seller
+# --------------------
+def delete_old_orders_for_seller(seller_name):
     conn = get_pg_connection()
     cur = conn.cursor()
-    cur.execute("DELETE FROM orders WHERE order_key = %s AND seller = %s", (order_key, seller))
+    one_day_ago_utc = datetime.now(utc) - timedelta(days=1)
+    print(f"[Scheduler] Deleting orders before: {one_day_ago_utc} for seller: {seller_name}")
+
+    cur.execute(
+        "DELETE FROM orders WHERE created_at < %s AND seller = %s RETURNING id",
+        (one_day_ago_utc, seller_name)
+    )
+    deleted_orders = cur.fetchall()
+    count = len(deleted_orders)
+
     conn.commit()
     cur.close()
     conn.close()
+    return count
 
-    flash(f"Order {order_key} deleted successfully.", "success")
-    return redirect(url_for("dashboard"))
+# --------------------
+# Delete old orders for ALL sellers (for scheduler)
+# --------------------
+def delete_old_orders_all_sellers():
+    conn = get_pg_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT DISTINCT seller FROM orders")
+    sellers = [row[0] for row in cur.fetchall()]
+    cur.close()
+    conn.close()
 
-#download button route
+    for seller in sellers:
+        count = delete_old_orders_for_seller(seller)
+        print(f"[Scheduler] Deleted {count} old orders for seller: {seller}")
 
+# --------------------
+# Manual delete for logged-in seller
+# --------------------
+@app.route("/test-delete")
+def test_delete():
+    seller = session.get("seller")
+    if not seller:
+        return "You must be logged in as a seller", 403
+    count = delete_old_orders_for_seller(seller)
+    return f"Deleted {count} old orders for seller {seller}"
+
+# --------------------
+# Download old orders in Excel for logged-in seller
+# --------------------
 @app.route("/download-old-orders")
 def download_old_orders():
     seller = session.get("seller")
     if not seller:
-        return "You must be logged in as a seller", 403
-    
+        flash("You must be logged in to download old orders.", "danger")
+        return redirect(url_for("login"))
+
     one_day_ago_utc = datetime.now(utc) - timedelta(days=1)
 
     conn = get_pg_connection()
@@ -275,54 +305,34 @@ def download_old_orders():
     conn.close()
 
     if not rows:
-        return "No old orders found to download."
+        flash("No old orders found to download.", "info")
+        return redirect(url_for("dashboard"))
 
     # Create DataFrame
     df = pd.DataFrame(rows, columns=col_names)
 
-    # Create an in-memory output file
+    # Save Excel to memory
     output = io.BytesIO()
     with pd.ExcelWriter(output, engine="openpyxl") as writer:
         df.to_excel(writer, index=False, sheet_name="Old Orders")
     output.seek(0)
 
-    # Send file to browser
-    timestamp_str = ph_time.strftime("%Y-%m-%d")
+    # Manila time for filename
+    ph_time = datetime.now(utc).astimezone(timezone("Asia/Manila"))
+    timestamp_str = ph_time.strftime("%Y-%m-%d_%H-%M-%S")
+    filename = f"{seller}_{timestamp_str}_old_orders.xlsx"
 
-    filename = f"{seller}_{timestamp_str}_orders.xlsx"
-    return send_file(output, as_attachment=True, download_name=filename, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    return send_file(output, as_attachment=True, download_name=filename,
+                     mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
-
-#connecting to postgres
-def get_pg_connection():
-    return psycopg2.connect(DATABASE_URL, sslmode="require")
-
-# Define scheduler globally
-scheduler = BackgroundScheduler()
-
-def delete_old_orders_for_seller(seller_name):
-    conn = get_pg_connection()
-    cur = conn.cursor()
-    one_day_ago_utc = datetime.now(utc) - timedelta(days=1)
-    print(f"[Scheduler] Deleting orders before: {one_day_ago_utc} for seller: {seller_name}")
-    cur.execute(
-        "DELETE FROM orders WHERE created_at < %s AND seller = %s",
-        (one_day_ago_utc, seller_name)
-    )
-    conn.commit()
-    cur.close()
-    conn.close()
-
-
-# Start the scheduler
-def start_scheduler_once():
-    if not scheduler.get_jobs():
-        scheduler.add_job(delete_old_orders_for_seller, 'interval', days=1)
-        scheduler.start()
-        print("[Scheduler] Started background scheduler")
+# --------------------
+# Scheduler setup
+# --------------------
+# Change your scheduler job to:
 
 scheduler = BackgroundScheduler(timezone=utc)
 scheduler.add_job(delete_old_orders_for_seller, 'interval', days=1)
+scheduler.add_job(delete_old_orders_all_sellers, 'interval', days=1)
 scheduler.start()
 #data base connection and commit
 def init_pg():
