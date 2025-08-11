@@ -321,47 +321,6 @@ def buyer_invoice(buyer_name):
                            orders=orders,
                            seller=seller)
 
-
-#invoice in excel specific buyer
-@app.route("/download_invoice_excel/<buyer>")
-def download_invoice_excel(buyer):
-
-    # Fetch seller from session
-    seller = session.get("seller")
-    conn = get_pg_connection()
-    cur = conn.cursor()
-    cur.execute(
-        """SELECT order_key, product, quantity, unit_price, price, payment, created_at
-           FROM orders WHERE seller = ? AND name = ? ORDER BY created_at""",
-        (seller, buyer)
-    )
-    orders = cursor.fetchall()
-    conn.close()
-
-    # Create Excel file in memory
-    output = io.BytesIO()
-    workbook = xlsxwriter.Workbook(output, {'in_memory': True})
-    worksheet = workbook.add_worksheet("Invoice")
-
-    headers = ["Order Key", "Product", "Qty", "Unit Price", "Total", "Payment", "Date"]
-    for col, header in enumerate(headers):
-        worksheet.write(0, col, header)
-
-    total = 0
-    for row_num, order in enumerate(orders, start=1):
-        for col_num, value in enumerate(order):
-            worksheet.write(row_num, col_num, str(value))
-        total += order[4]
-
-    worksheet.write(len(orders) + 1, 3, "Grand Total")
-    worksheet.write(len(orders) + 1, 4, total)
-
-    workbook.close()
-    output.seek(0)
-
-    filename = f"Invoice_{buyer}.xlsx"
-    return send_file(output, download_name=filename, as_attachment=True)
-    
 #all buyers excel invoices
 @app.route("/download_all_invoices_excel")
 def download_all_invoices_excel():
