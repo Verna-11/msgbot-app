@@ -359,7 +359,7 @@ def buyer_invoice(buyer_name):
     return render_template("buyer_invoice.html",
                            buyer=buyer_name,
                            orders=orders,
-                           seller=seller_name)
+                           seller=seller)
 
 
 
