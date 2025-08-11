@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from apscheduler.schedulers.background import BackgroundScheduler
 from flask import Flask, jsonify, request, render_template,session, redirect, url_for, flash, send_file
 import io
-import pandas as pd
+import xlsxwriter
 from werkzeug.security import generate_password_hash, check_password_hash
 import requests
 import re
@@ -282,48 +282,6 @@ def test_delete():
 # --------------------
 # Download old orders in Excel for logged-in seller
 # --------------------
-@app.route("/download-old-orders")
-def download_old_orders():
-    seller = session.get("seller")
-    if not seller:
-        flash("You must be logged in to download old orders.", "danger")
-        return redirect(url_for("login"))
-
-    one_day_ago_utc = datetime.now(utc) - timedelta(days=1)
-
-    conn = get_pg_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT id, user_id, seller, product, name, address, phone, payment, price, quantity, unit_price, created_at, order_key
-        FROM orders
-        WHERE created_at < %s AND seller = %s
-        ORDER BY created_at ASC
-    """, (one_day_ago_utc, seller))
-    rows = cur.fetchall()
-    col_names = [desc[0] for desc in cur.description]
-    cur.close()
-    conn.close()
-
-    if not rows:
-        flash("No old orders found to download.", "info")
-        return redirect(url_for("dashboard"))
-
-    # Create DataFrame
-    df = pd.DataFrame(rows, columns=col_names)
-
-    # Save Excel to memory
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        df.to_excel(writer, index=False, sheet_name="Old Orders")
-    output.seek(0)
-
-    # Manila time for filename
-    ph_time = datetime.now(utc).astimezone(timezone("Asia/Manila"))
-    timestamp_str = ph_time.strftime("%Y-%m-%d_%H-%M-%S")
-    filename = f"{seller}_{timestamp_str}_old_orders.xlsx"
-
-    return send_file(output, as_attachment=True, download_name=filename,
-                     mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
 @app.route("/clear_orders", methods=["POST"])
 def clear_orders():
@@ -341,6 +299,8 @@ def clear_orders():
 
     flash("✅ All your orders have been cleared.")
     return redirect(url_for("dashboard", seller=seller))
+
+#invoice in pdf route
 @app.route("/buyer/<buyer_name>")
 def buyer_invoice(buyer_name):
     seller = session.get("seller")
@@ -362,10 +322,46 @@ def buyer_invoice(buyer_name):
                            seller=seller)
 
 
+#invoice in excel
+@app.route("/download_invoice_excel/<buyer>")
+def download_invoice_excel(buyer):
 
-# --------------------
-# Scheduler setup
-# --------------------
+    # Fetch seller from session
+    seller = session.get("seller")
+    conn = get_pg_connection()
+    cur = conn.cursor()
+    cur.execute(
+        """SELECT order_key, product, quantity, unit_price, price, payment, created_at
+           FROM orders WHERE seller = ? AND name = ? ORDER BY created_at""",
+        (seller, buyer)
+    )
+    orders = cursor.fetchall()
+    conn.close()
+
+    # Create Excel file in memory
+    output = io.BytesIO()
+    workbook = xlsxwriter.Workbook(output, {'in_memory': True})
+    worksheet = workbook.add_worksheet("Invoice")
+
+    headers = ["Order Key", "Product", "Qty", "Unit Price", "Total", "Payment", "Date"]
+    for col, header in enumerate(headers):
+        worksheet.write(0, col, header)
+
+    total = 0
+    for row_num, order in enumerate(orders, start=1):
+        for col_num, value in enumerate(order):
+            worksheet.write(row_num, col_num, str(value))
+        total += order[4]
+
+    worksheet.write(len(orders) + 1, 3, "Grand Total")
+    worksheet.write(len(orders) + 1, 4, total)
+
+    workbook.close()
+    output.seek(0)
+
+    filename = f"Invoice_{buyer}.xlsx"
+    return send_file(output, download_name=filename, as_attachment=True)
+
 # Change your scheduler job to:
 
 scheduler = BackgroundScheduler(timezone=utc)
