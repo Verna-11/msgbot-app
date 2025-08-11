@@ -14,7 +14,6 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from psycopg2.errors import UniqueViolation
 from pytz import timezone, utc
-import excel
 
 
 load_dotenv()
@@ -292,7 +291,7 @@ def download_old_orders():
     filename = f"{seller}_{timestamp_str}_orders.xlsx"
     return send_file(output, as_attachment=True, download_name=filename, mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
-    
+
 #connecting to postgres
 def get_pg_connection():
     return psycopg2.connect(DATABASE_URL, sslmode="require")
