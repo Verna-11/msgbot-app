@@ -325,6 +325,23 @@ def download_old_orders():
     return send_file(output, as_attachment=True, download_name=filename,
                      mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 
+@app.route("/clear_orders", methods=["POST"])
+def clear_orders():
+    seller = session.get("seller")  # or however you store logged-in seller
+    if not seller:
+        flash("Not logged in.")
+        return redirect(url_for("login"))
+
+    conn = get_pg_connection()
+    cur = conn.cursor()
+    cur.execute("DELETE FROM orders WHERE seller = %s", (seller,))
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    flash("✅ All your orders have been cleared.")
+    return redirect(url_for("dashboard", seller=seller))
+
 # --------------------
 # Scheduler setup
 # --------------------
