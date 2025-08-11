@@ -15,10 +15,17 @@
 
       <a href="https://m.me/m1neorder?ref={{seller}}" 
    class="flex items-center gap-2 text-white rounded-lg bg-pink-500 shadow px-4 py-1 hover:bg-white hover:text-pink-500 transition-colors">
-    <img src="https://upload.wikimedia.org/wikipedia/commons/8/83/Facebook_Messenger_4_Logo.svg" 
-         alt="Messenger" class="w-5 h-5">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" class="w-5 h-5">
+      <linearGradient id="messengerGradient" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#00B2FF"/>
+        <stop offset="100%" stop-color="#006AFF"/>
+      </linearGradient>
+      <path fill="url(#messengerGradient)" d="M256.64 32C132.48 32 32 125.44 32 240c0 66.56 31.36 126.08 80.96 165.12V480l74.24-40.96c21.44 5.92 44.48 9.28 69.44 9.28 124.16 0 224.64-93.44 224.64-208S380.8 32 256.64 32z"/>
+      <path fill="#fff" d="M188.16 308.48l-54.4-57.6 107.84-57.6 59.84 57.6 98.88-57.6-107.84 115.2-59.84-57.6z"/>
+    </svg>
     <strong>m.me/m1neorder?ref={{seller}}</strong>
 </a>
+
       <a href="/logout" class="flex items-center gap-2 text-white rounded-full bg-pink-500 shadow px-4 py-1 hover:bg-white hover:text-pink-500 transition-colors">
         <strong>Logout</strong>
       </a>

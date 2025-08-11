@@ -803,7 +803,7 @@ def handle_user_message(user_id, msg):
             user_states.pop(user_id, None)
             return (
                 f"✅ *Order confirmed!*\n\n"
-                f"   Store: {order['seller']}\n"
+                f"🏪 Store: {order['seller']}\n"
                 f"🆔 Order Key: {order_key}\n"
                 f"📦 Product: {order['product']}\n"
                 f"🔢 Quantity: {order['quantity']} x ₱{order['unit_price']:.2f}\n"
@@ -812,9 +812,10 @@ def handle_user_message(user_id, msg):
                 f"📍 Address: {order['address']}\n"
                 f"📞 Phone: {order['phone']}\n"
                 f"💳 Payment: {order['payment']}\n\n"
-                f"Dashboard: https://anrev.onrender.com\n"
-                f"*Like our page for guides and updates*"
+                f"🖥️ Dashboard: https://anrev.onrender.com\n"
+                f"👍 *Like our page for updates!*"
             )
+
         else:
             # Let user change cached details if they said something other than "yes"
             user_states[user_id]["step"] = "ask_name"
@@ -844,7 +845,7 @@ def handle_user_message(user_id, msg):
         user_states.pop(user_id)
         return (
             f"✅ *Order confirmed!*\n\n"
-            f"   Store: {order['seller']}\n"
+            f"🏪 Store: {order['seller']}\n"
             f"🆔 Order Key: {order_key}\n"
             f"📦 Product: {order['product']}\n"
             f"🔢 Quantity: {order['quantity']} x ₱{order['unit_price']:.2f}\n"
@@ -853,9 +854,10 @@ def handle_user_message(user_id, msg):
             f"📍 Address: {order['address']}\n"
             f"📞 Phone: {order['phone']}\n"
             f"💳 Payment: {order['payment']}\n\n"
-            f"Dashboard: > https://anrev.onrender.com\n"
-            f"*Like our page for updates*"
+            f"🖥️ Dashboard: https://anrev.onrender.com\n"
+            f"👍 *Like our page for updates!*"
         )
+
     else:
         user_states.pop(user_id, None)
         return "Oops, something went wrong. Let's start over. Please send your order again."
