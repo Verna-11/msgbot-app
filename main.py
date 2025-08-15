@@ -320,7 +320,6 @@ def buyer_invoice(buyer_name):
                            buyer=buyer_name,
                            orders=orders,
                            seller=seller)
-
 #all buyers excel invoices
 @app.route("/download_all_invoices_excel")
 def download_all_invoices_excel():
