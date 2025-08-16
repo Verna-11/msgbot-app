@@ -14,6 +14,7 @@ import psycopg2
 from psycopg2.extras import RealDictCursor
 from psycopg2.errors import UniqueViolation
 from pytz import timezone, utc
+from supabase import create_client, Client
 
 
 
@@ -68,24 +69,20 @@ def register():
         # Hash password
         hashed_password = generate_password_hash(password)
 
-        # Save to DB
         try:
-            conn = get_pg_connection()
-            cur = conn.cursor()
-
             # Check if seller or email already exists
-            cur.execute("SELECT * FROM sellers WHERE seller = %s OR email = %s", (seller, email))
-            existing = cur.fetchone()
-            if existing:
+            existing = supabase.table("sellers").select("*").or_(f"seller.eq.{seller},email.eq.{email}").execute()
+
+            if len(existing.data) > 0:
                 flash('Seller or email already exists.', 'danger')
                 return render_template('register.html')
 
             # Insert new seller
-            cur.execute("INSERT INTO sellers (seller, password, email) VALUES (%s, %s, %s)",
-                        (seller, hashed_password, email))
-            conn.commit()
-            cur.close()
-            conn.close()
+            supabase.table("sellers").insert({
+                "seller": seller,
+                "password": hashed_password,
+                "email": email
+            }).execute()
 
             flash('Registration successful! You can now log in.', 'success')
             return redirect(url_for('login'))
@@ -99,25 +96,28 @@ def register():
 
 
 
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         seller = request.form['seller']
         password = request.form['password']
 
-        conn = get_pg_connection()
-        cur = conn.cursor()
-        cur.execute("SELECT password FROM sellers WHERE seller = %s", (seller,))
-        result = cur.fetchone()
-        cur.close()
-        conn.close()
+        try:
+            # Query seller record
+            result = supabase.table("sellers").select("password").eq("seller", seller).execute()
 
-        if result and check_password_hash(result[0], password):
-            session['seller'] = seller
-            flash("Login successful.", "success")
-            return redirect(url_for('dashboard'))
-        else:
-            flash("Invalid credentials.", "danger")
+            if result.data and check_password_hash(result.data[0]['password'], password):
+                session['seller'] = seller
+                flash("Login successful.", "success")
+                return redirect(url_for('dashboard'))
+            else:
+                flash("Invalid credentials.", "danger")
+
+        except Exception as e:
+            print("Error:", e)
+            flash("Login failed. Please try again later.", "danger")
+
     return render_template('login.html')
 
 
@@ -213,20 +213,29 @@ def update_order(order_key):
 
     price = quantity * unit_price if quantity and unit_price else None
 
-    conn = get_pg_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        UPDATE orders
-        SET product=%s, quantity=%s, unit_price=%s, price=%s,
-            address=%s, phone=%s, payment=%s
-        WHERE order_key=%s AND seller=%s
-    """, (product, quantity, unit_price, price, address, phone, payment, order_key, seller))
-    conn.commit()
-    cur.close()
-    conn.close()
+    try:
+        # Use Supabase update query
+        result = supabase.table("orders").update({
+            "product": product,
+            "quantity": quantity,
+            "unit_price": unit_price,
+            "price": price,
+            "address": address,
+            "phone": phone,
+            "payment": payment
+        }).eq("order_key", order_key).eq("seller", seller).execute()
 
-    flash(f"Order {order_key} updated successfully.", "success")
+        if result.data:
+            flash(f"Order {order_key} updated successfully.", "success")
+        else:
+            flash("Order not found or update failed.", "danger")
+
+    except Exception as e:
+        print("Error updating order:", e)
+        flash("Something went wrong while updating the order.", "danger")
+
     return redirect(url_for("dashboard"))
+
 
 #connecting to postgres
 def get_pg_connection():
@@ -237,37 +246,50 @@ scheduler = BackgroundScheduler()
 # Delete old orders for a specific seller
 # --------------------
 def delete_old_orders_for_seller(seller_name):
-    conn = get_pg_connection()
-    cur = conn.cursor()
-    one_day_ago_utc = datetime.now(utc) - timedelta(days=1)
+    one_day_ago_utc = datetime.now(timezone.utc) - timedelta(days=1)
     print(f"[Scheduler] Deleting orders before: {one_day_ago_utc} for seller: {seller_name}")
 
-    cur.execute(
-        "DELETE FROM orders WHERE created_at < %s AND seller = %s RETURNING id",
-        (one_day_ago_utc, seller_name)
-    )
-    deleted_orders = cur.fetchall()
-    count = len(deleted_orders)
+    try:
+        # 1. Find orders that will be deleted
+        old_orders = supabase.table("orders") \
+            .select("id") \
+            .lt("created_at", one_day_ago_utc.isoformat()) \
+            .eq("seller", seller_name) \
+            .execute()
 
-    conn.commit()
-    cur.close()
-    conn.close()
-    return count
+        deleted_ids = [order["id"] for order in old_orders.data]
+
+        # 2. Delete them
+        if deleted_ids:
+            supabase.table("orders") \
+                .delete() \
+                .lt("created_at", one_day_ago_utc.isoformat()) \
+                .eq("seller", seller_name) \
+                .execute()
+
+        return len(deleted_ids)
+
+    except Exception as e:
+        print("Error deleting old orders:", e)
+        return 0
 
 # --------------------
 # Delete old orders for ALL sellers (for scheduler)
 # --------------------
 def delete_old_orders_all_sellers():
-    conn = get_pg_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT DISTINCT seller FROM orders")
-    sellers = [row[0] for row in cur.fetchall()]
-    cur.close()
-    conn.close()
+    try:
+        # 1. Get all distinct sellers
+        result = supabase.table("orders").select("seller").execute()
+        sellers = list({row["seller"] for row in result.data if row.get("seller")})
 
-    for seller in sellers:
-        count = delete_old_orders_for_seller(seller)
-        print(f"[Scheduler] Deleted {count} old orders for seller: {seller}")
+        # 2. Loop through each seller and clean up
+        for seller in sellers:
+            count = delete_old_orders_for_seller(seller)
+            print(f"[Scheduler] Deleted {count} old orders for seller: {seller}")
+
+    except Exception as e:
+        print("Error fetching sellers:", e)
+
 
 # --------------------
 # Manual delete for logged-in seller
@@ -286,41 +308,58 @@ def test_delete():
 
 @app.route("/clear_orders", methods=["POST"])
 def clear_orders():
-    seller = session.get("seller")  # or however you store logged-in seller
+    seller = session.get("seller")
     if not seller:
         flash("Not logged in.")
         return redirect(url_for("login"))
 
-    conn = get_pg_connection()
-    cur = conn.cursor()
-    cur.execute("DELETE FROM orders WHERE seller = %s", (seller,))
-    conn.commit()
-    cur.close()
-    conn.close()
+    try:
+        # Delete all orders for this seller
+        result = supabase.table("orders").delete().eq("seller", seller).execute()
 
-    flash("✅ All your orders have been cleared.")
+        # Count how many were deleted
+        deleted_count = len(result.data) if result.data else 0
+
+        flash(f"✅ Cleared {deleted_count} orders for seller {seller}.")
+    except Exception as e:
+        print("Error clearing orders:", e)
+        flash("⚠️ Failed to clear orders. Please try again.", "danger")
+
     return redirect(url_for("dashboard", seller=seller))
+
 
 #invoice in pdf route
 @app.route("/buyer/<buyer_name>")
 def buyer_invoice(buyer_name):
     seller = session.get("seller")
-    conn = get_pg_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT order_key, product, quantity, unit_price, price, payment, created_at
-        FROM orders
-        WHERE name = %s AND seller = %s
-        ORDER BY created_at ASC
-    """, (buyer_name, seller))
-    orders = cur.fetchall()
-    cur.close()
-    conn.close()
+    if not seller:
+        flash("You must be logged in.", "danger")
+        return redirect(url_for("login"))
 
-    return render_template("buyer_invoice.html",
-                           buyer=buyer_name,
-                           orders=orders,
-                           seller=seller)
+    try:
+        # Query orders for this buyer and seller
+        result = (
+            supabase.table("orders")
+            .select("order_key, product, quantity, unit_price, price, payment, created_at")
+            .eq("name", buyer_name)
+            .eq("seller", seller)
+            .order("created_at", desc=False)  # ASC
+            .execute()
+        )
+
+        orders = result.data if result.data else []
+
+        return render_template(
+            "buyer_invoice.html",
+            buyer=buyer_name,
+            orders=orders,
+            seller=seller
+        )
+    except Exception as e:
+        print("Error fetching buyer invoice:", e)
+        flash("⚠️ Could not load buyer invoice.", "danger")
+        return redirect(url_for("dashboard"))
+
 #all buyers excel invoices
 @app.route("/download_all_invoices_excel")
 def download_all_invoices_excel():
@@ -328,52 +367,82 @@ def download_all_invoices_excel():
     if not seller:
         return "Unauthorized", 401
 
-    conn = get_pg_connection()
-    cur = conn.cursor()
-
-    # Get all distinct buyers for this seller
-    cur.execute("SELECT DISTINCT name FROM orders WHERE seller = %s ORDER BY name", (seller,))
-    buyers = [row[0] for row in cur.fetchall()]
-
-    output = io.BytesIO()
-    workbook = xlsxwriter.Workbook(output, {'in_memory': True})
-
-    for buyer in buyers:
-        # Sheet name max length = 31 chars
-        sheet_name = buyer[:31] if buyer else "Unknown"
-        worksheet = workbook.add_worksheet(sheet_name)
-
-        # Fetch buyer orders
-        cur.execute(
-            """SELECT order_key, product, quantity, unit_price, price, payment, created_at
-               FROM orders
-               WHERE seller = %s AND name = %s
-               ORDER BY created_at""",
-            (seller, buyer)
+    try:
+        # 1. Get distinct buyers for this seller
+        buyers_result = (
+            supabase.table("orders")
+            .select("name")
+            .eq("seller", seller)
+            .order("name")
+            .execute()
         )
-        orders = cur.fetchall()
 
-        headers = ["Order Key", "Product", "Qty", "Unit Price", "Total", "Payment", "Date"]
-        for col, header in enumerate(headers):
-            worksheet.write(0, col, header)
+        buyers = sorted(set(row["name"] for row in buyers_result.data if row["name"]))
 
-        total = 0
-        for row_num, order in enumerate(orders, start=1):
-            for col_num, value in enumerate(order):
-                if col_num == 6 and hasattr(value, "strftime"):  # Format date
-                    value = value.strftime("%Y-%m-%d %H:%M")
-                worksheet.write(row_num, col_num, str(value))
-            total += float(order[4])
+        # 2. Create Excel file in memory
+        output = io.BytesIO()
+        workbook = xlsxwriter.Workbook(output, {'in_memory': True})
 
-        worksheet.write(len(orders) + 1, 3, "Grand Total")
-        worksheet.write(len(orders) + 1, 4, total)
+        for buyer in buyers:
+            sheet_name = buyer[:31] if buyer else "Unknown"
+            worksheet = workbook.add_worksheet(sheet_name)
 
-    conn.close()
-    workbook.close()
-    output.seek(0)
+            # 3. Fetch buyer orders
+            orders_result = (
+                supabase.table("orders")
+                .select("order_key, product, quantity, unit_price, price, payment, created_at")
+                .eq("seller", seller)
+                .eq("name", buyer)
+                .order("created_at")
+                .execute()
+            )
 
-    filename = f"All_Buyers_Invoices_{seller}.xlsx"
-    return send_file(output, download_name=filename, as_attachment=True)
+            orders = orders_result.data if orders_result.data else []
+
+            headers = ["Order Key", "Product", "Qty", "Unit Price", "Total", "Payment", "Date"]
+            for col, header in enumerate(headers):
+                worksheet.write(0, col, header)
+
+            total = 0
+            for row_num, order in enumerate(orders, start=1):
+                values = [
+                    order.get("order_key"),
+                    order.get("product"),
+                    order.get("quantity"),
+                    order.get("unit_price"),
+                    order.get("price"),
+                    order.get("payment"),
+                    order.get("created_at"),
+                ]
+
+                for col_num, value in enumerate(values):
+                    if col_num == 6 and value:  # Format created_at
+                        try:
+                            value = datetime.fromisoformat(value).strftime("%Y-%m-%d %H:%M")
+                        except Exception:
+                            pass
+                    worksheet.write(row_num, col_num, str(value) if value is not None else "")
+
+                if order.get("price"):
+                    try:
+                        total += float(order["price"])
+                    except ValueError:
+                        pass
+
+            worksheet.write(len(orders) + 1, 3, "Grand Total")
+            worksheet.write(len(orders) + 1, 4, total)
+
+        # 4. Finalize and return file
+        workbook.close()
+        output.seek(0)
+
+        filename = f"All_Buyers_Invoices_{seller}.xlsx"
+        return send_file(output, download_name=filename, as_attachment=True)
+
+    except Exception as e:
+        print("Error generating Excel:", e)
+        return "Error generating Excel file", 500
+
 
 # Change your scheduler job to:
 
@@ -381,56 +450,20 @@ scheduler = BackgroundScheduler(timezone=utc)
 scheduler.add_job(delete_old_orders_all_sellers, 'interval', days=1)
 scheduler.start()
 #data base connection and commit
+
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY")
+
+supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
+
 def init_pg():
-    conn = get_pg_connection()
-    cur = conn.cursor()
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS orders (
-            id SERIAL PRIMARY KEY,
-            user_id TEXT,
-            seller TEXT,
-            product TEXT,
-            name TEXT,
-            address TEXT,
-            phone TEXT,
-            payment TEXT,
-            price NUMERIC,
-            quantity INTEGER,
-            unit_price NUMERIC,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            order_key TEXT UNIQUE,
-            ref_code TEXT
+    # Just test connection now
+    try:
+        supabase.table("orders").select("*").limit(1).execute()
+        print("✅ Supabase connected, tables are ready.")
+    except Exception as e:
+        print("❌ Error:", e)
 
-
-        )
-    ''')
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS sellers (
-            seller TEXT PRIMARY KEY,
-            password TEXT
-        )
-    ''')
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS user_profiles (
-            user_id TEXT PRIMARY KEY,
-            name TEXT,
-            address TEXT,
-            phone TEXT,
-            payment TEXT
-        )
-    ''')
-    cur.execute('''
-        CREATE TABLE IF NOT EXISTS users (
-            fb_id TEXT PRIMARY KEY,
-            ref_code TEXT
-        )
-    ''')
-
-    conn.commit()
-    cur.close()
-    conn.close()
-
-init_pg() #initiating db
 
 # ✅ Messenger Webhook
 @app.route('/webhook', methods=['GET', 'POST'])
@@ -481,20 +514,17 @@ def webhook():
 
                 # Optional: save to DB
                 try:
-                    conn = get_pg_connection()
-                    cur = conn.cursor()
-                    cur.execute("SELECT ref_code FROM users WHERE fb_id = %s", (sender_id,))
-                    row = cur.fetchone()
-                    if row is None:
-                        cur.execute("INSERT INTO users (fb_id, ref_code) VALUES (%s, %s)", (sender_id, ref_code))
-                    elif not row[0]:
-                        cur.execute("UPDATE users SET ref_code = %s WHERE fb_id = %s", (ref_code, sender_id))
-                    conn.commit()
-                    cur.close()
-                    conn.close()
-                    logging.info(f"Saved ref_code {ref_code} for {sender_id} in DB.")
+                    # Check if user exists
+                    existing = supabase.table("users").select("ref_code").eq("fb_id", sender_id).execute()
+                
+                    if not existing.data:
+                        supabase.table("users").insert({"fb_id": sender_id, "ref_code": ref_code}).execute()
+                        logging.info(f"Inserted new user {sender_id} with ref_code {ref_code}")
+                    elif not existing.data[0].get("ref_code"):
+                        supabase.table("users").update({"ref_code": ref_code}).eq("fb_id", sender_id).execute()
+                        logging.info(f"Updated user {sender_id} with ref_code {ref_code}")
                 except Exception as e:
-                    logging.error(f"DB Error: {e}")
+                    logging.error(f"Supabase Error: {e}")
 
                 send_message(sender_id, f"👋 Welcome! to *{ref_code}*'s shop")
                 continue  # ✅ Skip message if this is just a referral event
@@ -558,64 +588,90 @@ def handle_user_message(user_id, msg):
         parts = msg.split(" ", 1)
         if len(parts) != 2 or not parts[1].strip():
             return "❌ Please provide a valid order key to edit. Example: *edit abcd1234*"
-    
+        
         key = parts[1].strip()
-        conn = get_pg_connection()
-        cur = conn.cursor()
     
-        cur.execute("SELECT product, quantity, unit_price, address, phone, payment FROM orders WHERE order_key = %s AND user_id = %s", (key, user_id))
-        order = cur.fetchone()
-
-        if order:
-            product, quantity, unit_price, address, phone, payment = order
+        # 🔄 Query Supabase instead of psycopg2
+        response = (
+            supabase.table("orders")
+            .select("product, quantity, unit_price, address, phone, payment")
+            .eq("order_key", key)
+            .eq("user_id", user_id)
+            .limit(1)
+            .execute()
+        )
+    
+        if response.data:
+            order = response.data[0]
+            product = order["product"]
+            quantity = order["quantity"]
+            unit_price = float(order["unit_price"])
+            address = order["address"]
+            phone = order["phone"]
+            payment = order["payment"]
+    
             user_states[user_id] = {
                 "step": "edit_product",
                 "edit_key": key,
                 "order": {
                     "product": product,
                     "quantity": quantity,
-                    "unit_price": float(unit_price),
-                    "price": float(unit_price) * int(quantity),
+                    "unit_price": unit_price,
+                    "price": unit_price * int(quantity),
                     "address": address,
                     "phone": phone,
                     "payment": payment
                 }
             }
-            cur.close()
-            conn.close()
+    
             return (
                 f"📝 Editing order `{key}` for '{product}'.\n"
                 f"Current product: {product}, Qty: {quantity}, Unit Price: ₱{unit_price:.2f}\n\n"
                 f"✏️ Please send the new *product name/description*:"
             )
         else:
-            cur.close()
-            conn.close()
             return f"⚠️ *No order found* with key `{key}` that belongs to you."
 
     if msg.lower().startswith("cancel"):
         parts = msg.split(" ", 1)
         if len(parts) != 2 or not parts[1].strip():
             return "❌ Please provide a valid *order key*. Example: *cancel abcd1234*"
-
+    
         key = parts[1].strip().lower()
-        conn = get_pg_connection()
-        cur = conn.cursor()
-
-        # Double check if the order exists and belongs to user
-        cur.execute("SELECT id FROM orders WHERE order_key = %s AND user_id = %s", (key, user_id))
-        order = cur.fetchone()
-
-        if order:
-            cur.execute("DELETE FROM orders WHERE id = %s", (order[0],))
-            conn.commit()
-            result = f"✅ Your order with key *`{key}`* has been *canceled.*"
+    
+        # 🔎 Check if the order exists
+        response = (
+            supabase.table("orders")
+            .select("id")
+            .eq("order_key", key)
+            .eq("user_id", user_id)
+            .limit(1)
+            .execute()
+        )
+    
+        if response.error:
+            logging.error(f"Supabase error: {response.error}")
+            return "⚠️ Something went wrong while checking your order."
+    
+        if response.data:
+            order_id = response.data[0]["id"]
+    
+            # 🗑️ Delete the order
+            delete_response = (
+                supabase.table("orders")
+                .delete()
+                .eq("id", order_id)
+                .execute()
+            )
+    
+            if delete_response.error:
+                logging.error(f"Supabase delete error: {delete_response.error}")
+                return "⚠️ Failed to cancel your order. Please try again later."
+    
+            return f"✅ Your order with key *`{key}`* has been *canceled.*"
         else:
-            result = f"⚠️ Order key *`{key}`* was not *found* or does not *belong* to you."
-
-        cur.close()
-        conn.close()
-        return result
+            return f"⚠️ Order key *`{key}`* was not *found* or does not *belong* to you."
+    
     state = user_states.get(user_id, {})
     ref_code = state.get("ref_code")
     
@@ -632,15 +688,18 @@ def handle_user_message(user_id, msg):
             # ⚠️ Use referral from state (latest click) or DB if not found
             seller_tag = state.get("ref_code")
             if not seller_tag:
-                conn = get_pg_connection()
-                cur = conn.cursor()
-                cur.execute("SELECT ref_code FROM users WHERE fb_id = %s", (user_id,))
-                row = cur.fetchone()
-                cur.close()
-                conn.close()
-                if row and row[0]:
-                    seller_tag = row[0]
+                response = (
+                    supabase.table("users")
+                    .select("ref_code")
+                    .eq("fb_id", user_id)
+                    .limit(1)
+                    .execute()
+                )
+            
+                if response.data and response.data[0].get("ref_code"):
+                    seller_tag = response.data[0]["ref_code"]
                     user_states[user_id] = {"ref_code": seller_tag}
+
                 else:
                     user_states.pop(user_id, None)
                     return (
@@ -751,7 +810,11 @@ def handle_user_message(user_id, msg):
                     "price": total_price
                 }
             }
-            return f"Thanks for your order for *'{product}'* from seller *#{seller_tag}.*\nMay I have your *full name*?"
+            return (
+                f"Thanks for your order for *'{product}'* from seller *#{seller_tag}.*\n"
+                "May I have your *full name*?"
+            )
+        
         else:
             user_states[user_id] = {
                 "step": "awaiting_address",
@@ -765,13 +828,12 @@ def handle_user_message(user_id, msg):
                 }
             }
             return "📍 Please enter your *delivery address*:"
-
-
+        
     elif state["step"] == "edit_product":
         state["order"]["product"] = msg
         state["step"] = "edit_quantity"
         return "🔢 New *quantity*?"
-
+    
     elif state["step"] == "edit_quantity":
         try:
             qty = int(msg)
@@ -779,8 +841,9 @@ def handle_user_message(user_id, msg):
             state["step"] = "edit_unit_price"
             return "💸 New unit *price*?"
         except ValueError:
+            return "⚠️ Please enter a valid number for *quantity*."
+        except ValueError:
             return "❌ Please enter a valid *number* for *quantity*."
-
     elif state["step"] == "edit_unit_price":
         try:
             price = float(msg)
@@ -794,44 +857,29 @@ def handle_user_message(user_id, msg):
         state["order"]["address"] = msg
         state["step"] = "edit_phone"
         return "📞 Got it. What's the new *phone number*?"
-
     elif state["step"] == "edit_phone":
         state["order"]["phone"] = msg
         state["step"] = "edit_payment"
         return "💳 Noted. What's the new *payment method*?"
-
     elif state["step"] == "edit_payment":
         state["order"]["payment"] = msg
         order = state["order"]
         order_key = state["edit_key"]
-
-        conn = get_pg_connection()
-        cur = conn.cursor()
-        cur.execute('''
-            UPDATE orders
-            SET
-                product = %s,
-                quantity = %s,
-                unit_price = %s,
-                price = %s, 
-                address = %s,
-                phone = %s,
-                payment = %s
-            WHERE order_key = %s AND user_id = %s
-        ''', (
-            order["product"],
-            order["quantity"],
-            order["unit_price"],
-            order["price"],
-            order["address"],
-            order["phone"],
-            order["payment"],
-            order_key,
-            user_id
-        ))
-        conn.commit()
-        cur.close()
-        conn.close()
+    
+        try:
+            supabase.table("orders").update({
+                "product": order["product"],
+                "quantity": order["quantity"],
+                "unit_price": order["unit_price"],
+                "price": order["price"],
+                "address": order["address"],
+                "phone": order["phone"],
+                "payment": order["payment"],
+            }).eq("order_key", order_key).eq("user_id", user_id).execute()
+    
+        except Exception as e:
+            logging.error(f"[DB] Error updating order {order_key} for {user_id}: {e}")
+    
 
         user_states.pop(user_id)
         return (
@@ -910,32 +958,39 @@ def handle_user_message(user_id, msg):
         return "Oops, something went wrong. Let's start over. Please send your order again."
 
 def get_user_profile(user_id):
-    conn = get_pg_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT name, address, phone, payment FROM user_profiles WHERE user_id = %s", (user_id,))
-    result = cur.fetchone()
-    cur.close()
-    conn.close()
-    return result if result else None
+    response = (
+        supabase.table("user_profiles")
+        .select("name, address, phone, payment")
+        .eq("user_id", user_id)
+        .limit(1)
+        .execute()
+    )
+
+    if response.data:
+        return response.data[0]  # returns dict: {"name": ..., "address": ..., ...}
+    return None
+
 
 def generate_order_key():
     return str(uuid.uuid4())[:8]  # short, user-friendly ID (8 chars)
 
 def save_user_profile(user_id, name, address, phone, payment):
-    conn = get_pg_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        INSERT INTO user_profiles (user_id, name, address, phone, payment)
-        VALUES (%s, %s, %s, %s, %s)
-        ON CONFLICT (user_id) DO UPDATE SET
-            name = EXCLUDED.name,
-            address = EXCLUDED.address,
-            phone = EXCLUDED.phone,
-            payment = EXCLUDED.payment
-    """, (user_id, name, address, phone, payment))
-    conn.commit()
-    cur.close()
-    conn.close()
+    data = {
+        "user_id": user_id,
+        "name": name,
+        "address": address,
+        "phone": phone,
+        "payment": payment
+    }
+
+    response = (
+        supabase.table("user_profiles")
+        .upsert(data, on_conflict="user_id")  # works like INSERT ... ON CONFLICT (user_id) DO UPDATE
+        .execute()
+    )
+
+    return response.data  # optional: returns the inserted/updated row(s)
+
 
 def save_order(user_id, order):
     order["ref_code"] = order["seller"]  # ✅ enforce always
@@ -943,30 +998,30 @@ def save_order(user_id, order):
     order_key = generate_order_key()
     logging.info(f"Saving order for user {user_id} with key {order_key} and ref_code {order['ref_code']}")
 
-    conn = get_pg_connection()
-    cur = conn.cursor()
-    cur.execute('''
-        INSERT INTO orders (user_id, seller, product, price, name, address, phone, payment, quantity, unit_price, order_key, ref_code)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-    ''', (
-        user_id,
-        order["seller"],
-        order["product"],
-        order["price"],
-        order["name"],
-        order["address"],
-        order["phone"],
-        order["payment"],
-        order["quantity"],
-        order["unit_price"],
-        order_key,
-        order["ref_code"]  # ✅ Now guaranteed to exist
-    ))
-    conn.commit()
-    cur.close()
-    conn.close()
-    logging.info(f"[Order] {user_id} placed order to #{order['ref_code']} for {order['product']}")
-    return order_key
+    data = {
+        "user_id": user_id,
+        "seller": order["seller"],
+        "product": order["product"],
+        "price": order["price"],
+        "name": order["name"],
+        "address": order["address"],
+        "phone": order["phone"],
+        "payment": order["payment"],
+        "quantity": order["quantity"],
+        "unit_price": order["unit_price"],
+        "order_key": order_key,
+        "ref_code": order["ref_code"],
+    }
+
+    response = supabase.table("orders").insert(data).execute()
+
+    if response.data:
+        logging.info(f"[Order] {user_id} placed order to #{order['ref_code']} for {order['product']}")
+        return order_key
+    else:
+        logging.error(f"❌ Failed to save order for {user_id}: {response}")
+        return None
+
 
 
 
@@ -1032,47 +1087,63 @@ def generate_invoice_for_sender(user_id, orders):
     return "\n".join(invoice_lines)
 
 def get_orders_by_sender(user_id, seller):
-    conn = get_pg_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        SELECT order_key, product, quantity, unit_price, price, address, phone, payment, created_at
-        FROM orders
-        WHERE user_id = %s AND seller = %s
-        ORDER BY created_at DESC
-    """, (user_id, seller))
-    orders = cur.fetchall()
-    cur.close()
-    conn.close()
-    return orders
+    response = (
+        supabase.table("orders")
+        .select("order_key, product, quantity, unit_price, price, address, phone, payment, created_at")
+        .eq("user_id", user_id)
+        .eq("seller", seller)
+        .order("created_at", desc=True)
+        .execute()
+    )
+
+    return response.data if response.data else []
 
 
 def save_ref_code_to_db(user_id, ref_code):
     try:
-        conn = get_pg_connection()
-        cur = conn.cursor()
-        cur.execute("SELECT ref_code FROM users WHERE fb_id = %s", (user_id,))
-        row = cur.fetchone()
-        if row is None:
-            cur.execute("INSERT INTO users (fb_id, ref_code) VALUES (%s, %s)", (user_id, ref_code))
-        elif not row[0] or row[0] != ref_code:
-            cur.execute("UPDATE users SET ref_code = %s WHERE fb_id = %s", (ref_code, user_id))
-        conn.commit()
-        cur.close()
-        conn.close()
+        # Check if user already exists
+        response = (
+            supabase.table("users")
+            .select("ref_code")
+            .eq("fb_id", user_id)
+            .execute()
+        )
+
+        if not response.data:  
+            # No row → insert new
+            supabase.table("users").insert({
+                "fb_id": user_id,
+                "ref_code": ref_code
+            }).execute()
+
+        elif not response.data[0].get("ref_code") or response.data[0]["ref_code"] != ref_code:
+            # Row exists but ref_code missing or different → update
+            supabase.table("users").update({
+                "ref_code": ref_code
+            }).eq("fb_id", user_id).execute()
+
     except Exception as e:
         logging.error(f"[DB] Error saving ref_code for {user_id}: {e}")
+
 
 # 📊 Public View 
 @app.route('/viewer_dashboard')
 def viewer_dashboard():
-    # Connect to your database
-    conn = get_pg_connection()
-    cur = conn.cursor()
+    try:
+        # Fetch all orders sorted by newest first
+        response = supabase.table("orders") \
+            .select("*") \
+            .order("created_at", desc=True) \
+            .execute()
 
-    # Fetch all orders
-    cur.execute("SELECT * FROM orders ORDER BY created_at DESC")
-    orders = cur.fetchall()
-    conn.close()
+        orders = response.data if response.data else []
+
+        return render_template("viewer_dashboard.html", orders=orders)
+
+    except Exception as e:
+        logging.error(f"[Viewer Dashboard] Failed to fetch orders: {e}")
+        return render_template("viewer_dashboard.html", orders=[])
+
 
     # Convert UTC to Philippine Time
     ph_tz = timezone('Asia/Manila')
@@ -1098,14 +1169,21 @@ def viewer_dashboard():
 def dashboard():
     seller = session.get("seller")
     if not seller:
-        return redirect(url_for('viewer_dashboard'))
+        return redirect(url_for("viewer_dashboard"))
 
-    conn = get_pg_connection()
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM orders WHERE seller = %s ORDER BY id DESC", (seller,))
-    orders = cur.fetchall()
-    cur.close()
-    conn.close()
+    # 🔄 Supabase query instead of psycopg2
+    response = (
+        supabase.table("orders")
+        .select("*")
+        .eq("seller", seller)
+        .order("id", desc=True)
+        .execute()
+    )
+
+    orders = response.data if response.data else []
+
+    return render_template("dashboard.html", seller=seller, orders=orders)
+
 
     # Convert UTC to Philippine time
     ph_tz = timezone('Asia/Manila')

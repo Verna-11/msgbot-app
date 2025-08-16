@@ -12,5 +12,6 @@ dependencies = [
     "python-dotenv>=1.1.1",
     "pytz>=2025.2",
     "requests>=2.32.4",
+    "supabase>=2.18.1",
     "xlsxwriter>=3.2.5",
 ]
