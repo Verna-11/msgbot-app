@@ -25,7 +25,8 @@ app = Flask(__name__)
 PAGE_ACCESS_TOKEN = os.getenv("PAGE_ACCESS_TOKEN")
 VERIFY_TOKEN = os.getenv("VERIFY_TOKEN")
 
-DATABASE_URL = os.environ.get("DATABASE_URL")
+DATABASE_URL = os.environ.get("SUPABASE_DB_URL")  # use your Supabase connection string
+
 app.secret_key = os.environ.get("SECRET_KEY")
 
 user_states = {}
